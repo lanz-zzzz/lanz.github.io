@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>私募基金客户看板 - 私享尊荣</title>
+<!-- 引入资源 -->
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/echarts.min.js"></script>
+<style>
+        @font-face {
+            font-family: 'PingFang SC';
+            src: local('PingFang SC');
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        /* 手机模拟器容器 */
+        .phone-container {
+            width: 390px;
+            height: 812px;
+            background-color: #F5F7FA;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            overflow: hidden;
+            border: 8px solid #1a1a1a;
+        }
+        /* 状态栏 */
+        .status-bar {
+            height: 44px;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            position: absolute;
+            top: 0;
+            width: 100%;
+            z-index: 50;
+        }
+        /* 页面切换动画 */
+        .page-content {
+            transition: opacity 0.3s ease-in-out;
+            height: calc(812px - 84px); /* 减去底部导航高度 */
+            overflow-y: auto;
+            scrollbar-width: none;
+            padding-bottom: 20px;
+        }
+        .page-content::-webkit-scrollbar {
+            display: none;
+        }
+        .hidden {
+            display: none;
+            opacity: 0;
+        }
+        .active {
+            display: block;
+            opacity: 1;
+        }
+        /* 渐变背景 */
+        .bg-gradient-finance {
+            background: linear-gradient(180deg, #1A3A5C 0%, #2A5C8C 100%);
+        }
+        /* 底部导航 */
+        .tab-bar {
+            height: 84px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: 20px;
+            z-index: 50;
+        }
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #6B7280;
+            font-size: 11px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .tab-item.active {
+            color: #1A3A5C;
+        }
+        .tab-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        /* 核心数字金色 */
+        .text-gold {
+            color: #C9A96E;
+        }
+        /* 卡片样式 */
+        .finance-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin: 12px 16px;
+            padding: 16px;
+        }
+        .income-green { color: #34C759; }
+        .loss-red { color: #FF3B30; }
+    </style>
+</head>
+<body>
+<div class="phone-container">
+<!-- 状态栏 -->
+<div class="status-bar" id="statusBar">
+<span id="currentTime">09:41</span>
+<div class="flex space-x-1 items-center">
+<iconify-icon icon="fluent:cellular-data-24-filled"></iconify-icon>
+<iconify-icon icon="fluent:wifi-1-24-filled"></iconify-icon>
+<iconify-icon icon="fluent:battery-1-24-filled"></iconify-icon>
+</div>
+</div>
+<!-- 页面1：首页概览 -->
+<div class="page-content active" id="page-home">
+<!-- 头部概览 -->
+<div class="bg-gradient-finance pt-12 pb-8 px-6 text-white rounded-b-[32px]">
+<div class="flex justify-between items-end mb-6">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-white text-lg font-medium">尊敬的张先生</span>
+<span class="px-2 py-0.5 bg-white bg-opacity-20 rounded text-xs text-blue-200 cursor-not-allowed flex items-center gap-1">
+                                个人视角
+                                <span class="text-blue-300">▾</span>
+</span>
+</div>
+<p class="text-xs text-blue-200 mt-0.5">[产品逻辑] 未来可切换查看单个产品或全景资产视图</p>
+<h1 class="text-2xl font-bold mt-1">下午好，欢迎回来</h1>
+</div>
+<p class="text-xs opacity-60">报告日期：2025年6月23日</p>
+</div>
+<div class="mb-4">
+<p class="text-xs opacity-70 mb-1">总资产 (元)</p>
+<div class="flex items-baseline">
+<span class="text-4xl font-bold">¥12,580,000</span>
+</div>
+<p class="text-xs text-blue-200 mt-1">数据更新至：2025-06-20 15:00</p>
+<p class="text-sm mt-2 income-green font-medium">较上月 +¥36,800 (+0.29%)</p>
+</div>
+</div>
+<!-- 核心数据卡片（横向滚动） -->
+<div class="flex overflow-x-auto space-x-3 px-4 -mt-6 no-scrollbar" style="scrollbar-width: none;">
+<div class="flex-shrink-0 w-32 bg-green-50 p-4 rounded-2xl border border-green-100 shadow-sm">
+<p class="text-xs text-gray-500 mb-1">本月收益</p>
+<p class="text-lg font-bold income-green">+¥36.8k</p>
+<div class="mt-2 h-1 w-full bg-green-200 rounded-full overflow-hidden">
+<div class="h-full bg-green-500" style="width: 65%"></div>
+</div>
+</div>
+<div class="flex-shrink-0 w-32 bg-blue-50 p-4 rounded-2xl border border-blue-100 shadow-sm">
+<p class="text-xs text-gray-500 mb-1">累计总收益</p>
+<p class="text-lg font-bold text-[#1A3A5C]">¥1.85M</p>
+<div class="mt-2 h-1 w-full bg-blue-200 rounded-full overflow-hidden">
+<div class="h-full bg-blue-500" style="width: 80%"></div>
+</div>
+</div>
+<div class="flex-shrink-0 w-32 bg-yellow-50 p-4 rounded-2xl border border-yellow-100 shadow-sm">
+<p class="text-xs text-gray-500 mb-1">超额收益</p>
+<p class="text-lg font-bold text-gold">+3.2%</p>
+<p class="text-xs text-gray-500 mt-0.5">相对基准：沪深300全收益指数</p>
+<div class="mt-2 h-1 w-full bg-yellow-200 rounded-full overflow-hidden">
+<div class="h-full bg-yellow-500" style="width: 45%"></div>
+</div>
+</div>
+</div>
+<!-- 图表：近6个月收益趋势 -->
+<div class="finance-card mt-6">
+<h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
+<iconify-icon class="mr-2 text-blue-600" icon="fluent:line-trend-24-filled"></iconify-icon>
+                    近6个月收益走势
+                </h3>
+<div id="trendChart" style="width: 100%; height: 180px;"></div>
+</div>
+<!-- 智能诊断卡片 -->
+<div class="mx-4 mt-3 p-4 bg-white rounded-2xl shadow-sm border border-gray-50">
+<div class="flex justify-between items-start">
+<div class="flex-1">
+<h4 class="text-sm font-bold text-gray-800 mb-1">📈 本月表现解读</h4>
+<p class="text-xs text-gray-600 leading-relaxed">您的收益增长主要受益于<b class="text-green-600">重仓科技股上涨</b>，但部分资产出现<b class="text-red-600">商品期货回调</b>的短期影响。</p>
+</div>
+<a class="text-xs font-medium text-blue-600 flex items-center whitespace-nowrap ml-3 mt-1" href="javascript:void(0)" onclick="switchPage('volatility')">
+            查看详情
+            <span class="ml-0.5">→</span>
+</a>
+</div>
+</div>
+<!-- 图表：资产配置 -->
+<div class="finance-card">
+<h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
+<iconify-icon class="mr-2 text-blue-600" icon="fluent:chart-pie-24-filled"></iconify-icon>
+                    资产配置
+                </h3>
+<div id="allocationChart" style="width: 100%; height: 220px;"></div>
+<div class="grid grid-cols-2 gap-2 mt-4">
+<div class="flex items-center text-xs text-gray-600">
+<span class="w-2 h-2 rounded-full bg-[#2A5C8C] mr-2"></span> 股票多头 52%
+                    </div>
+<div class="flex items-center text-xs text-gray-600">
+<span class="w-2 h-2 rounded-full bg-[#34C759] mr-2"></span> 债券资产 28%
+                    </div>
+<div class="flex items-center text-xs text-gray-600">
+<span class="w-2 h-2 rounded-full bg-[#C9A96E] mr-2"></span> 私募股权 12%
+                    </div>
+<div class="flex items-center text-xs text-gray-600">
+<span class="w-2 h-2 rounded-full bg-[#8E8E93] mr-2"></span> 现金/货币 8%
+                    </div>
+</div>
+</div>
+<!-- 配置对比 -->
+<div class="mx-4 mt-2 mb-4">
+<p class="text-xs text-gray-500 mb-1">您的配置 vs 同类平均</p>
+<div class="flex items-center gap-3">
+<div class="flex-1">
+<div class="flex justify-between text-xs text-gray-400 mb-0.5">
+<span>权益类</span>
+<span>您 52% | 同类 48%</span>
+</div>
+<div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+<div class="h-full bg-blue-600 rounded-full" style="width:52%"></div>
+</div>
+</div>
+<div class="flex-1">
+<div class="flex justify-between text-xs text-gray-400 mb-0.5">
+<span>固收类</span>
+<span>您 28% | 同类 32%</span>
+</div>
+<div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+<div class="h-full bg-green-500 rounded-full" style="width:28%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 页面2：波动原因 -->
+<div class="page-content hidden" id="page-volatility">
+<div class="bg-gradient-finance pt-12 pb-6 px-6 text-white rounded-b-[32px] text-center">
+<h1 class="text-xl font-bold">本月波动原因</h1>
+<p class="text-xs opacity-70 mt-1">为您深度解析资产变动背后的逻辑</p>
+</div>
+<!-- 盈利来源 -->
+<div class="mt-6 px-4">
+<h3 class="text-sm font-bold income-green flex items-center mb-3">
+<iconify-icon class="mr-1" icon="fluent:trending-arrow-up-24-filled"></iconify-icon>
+                    本月赚钱的3个方向
+                </h3>
+<div class="space-y-3">
+<div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
+<div class="flex items-center">
+<div class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
+<iconify-icon class="text-green-600 text-xl" icon="fluent:chip-24-regular"></iconify-icon>
+</div>
+<div>
+<p class="text-sm font-bold text-gray-800">重仓科技股上涨</p>
+<p class="text-xs text-gray-500">AI板块带动持仓估值修复</p>
+</div>
+</div>
+<span class="text-sm font-bold income-green">+¥24,500</span>
+</div>
+<div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
+<div class="flex items-center">
+<div class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
+<iconify-icon class="text-green-600 text-xl" icon="fluent:math-formula-24-regular"></iconify-icon>
+</div>
+<div>
+<p class="text-sm font-bold text-gray-800">量化策略持续稳健</p>
+<p class="text-xs text-gray-500">市场波动率回升利好套利</p>
+</div>
+</div>
+<span class="text-sm font-bold income-green">+¥8,200</span>
+</div>
+<div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
+<div class="flex items-center">
+<div class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
+<iconify-icon class="text-green-600 text-xl" icon="fluent:money-hand-24-regular"></iconify-icon>
+</div>
+<div>
+<p class="text-sm font-bold text-gray-800">债券利息到账</p>
+<p class="text-xs text-gray-500">固收部分提供稳定现金流</p>
+</div>
+</div>
+<span class="text-sm font-bold income-green">+¥4,100</span>
+</div>
+</div>
+</div>
+<!-- 亏损来源 -->
+<div class="mt-8 px-4">
+<h3 class="text-sm font-bold loss-red flex items-center mb-3">
+<iconify-icon class="mr-1" icon="fluent:trending-arrow-down-24-filled"></iconify-icon>
+                    本月2个调整原因
+                </h3>
+<div class="space-y-3">
+<div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
+<div class="flex items-center">
+<div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center mr-3">
+<iconify-icon class="text-red-600 text-xl" icon="fluent:box-24-regular"></iconify-icon>
+</div>
+<div>
+<p class="text-sm font-bold text-gray-800">商品期货市场回调</p>
+<p class="text-xs text-gray-500">原油价格波动压制CTA策略</p>
+</div>
+</div>
+<span class="text-sm font-bold loss-red">-¥5,600</span>
+</div>
+<div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
+<div class="flex items-center">
+<div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center mr-3">
+<iconify-icon class="text-red-600 text-xl" icon="fluent:cart-24-regular"></iconify-icon>
+</div>
+<div>
+<p class="text-sm font-bold text-gray-800">消费股短期调整</p>
+<p class="text-xs text-gray-500">白酒板块受行业情绪波动影响</p>
+</div>
+</div>
+<span class="text-sm font-bold loss-red">-¥3,200</span>
+</div>
+</div>
+</div>
+<!-- 提示卡片 -->
+<div class="m-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
+<div class="flex items-start">
+<iconify-icon class="text-blue-600 mt-1 mr-2" icon="fluent:info-24-filled"></iconify-icon>
+<p class="text-xs text-blue-800 leading-relaxed">
+                        总体来看，本月您的投资组合收益稳健，短期波动属于正常市场调整。基金经理已对持仓进行了优化，增加了防御性资产权重，以应对后续可能的震荡。
+                    </p>
+</div>
+</div>
+</div>
+<!-- 页面3：风险体检 -->
+<div class="page-content hidden" id="page-risk">
+<div class="bg-gradient-finance pt-12 pb-6 px-6 text-white rounded-b-[32px] text-center">
+<h1 class="text-xl font-bold">风险健康体检</h1>
+<p class="text-xs opacity-70 mt-1">您的投资组合风险评级：BBB（稳健型）</p>
+</div>
+<!-- 仪表盘 -->
+<div class="finance-card mt-6 flex flex-col items-center py-8">
+<div id="riskGauge" style="width: 260px; height: 180px;"></div>
+<div class="text-center -mt-4">
+<p class="text-2xl font-bold text-green-600">82分</p>
+<p class="text-sm text-gray-500">风险等级：稳健</p>
+</div>
+</div>
+<!-- 指标卡片 -->
+<div class="space-y-4 px-4 mt-2">
+<!-- 历史最大回撤 -->
+<div class="bg-white p-4 rounded-2xl shadow-sm">
+<div class="flex justify-between items-center mb-2">
+<span class="text-sm font-bold text-gray-800">历史最大回撤</span>
+<span class="text-sm font-bold income-green">-8.2%</span>
+</div>
+<div class="relative h-2 w-full bg-gray-100 rounded-full mb-3">
+<div class="absolute inset-y-0 left-0 bg-gradient-to-r from-green-400 via-yellow-400 to-red-400 rounded-full w-full opacity-30"></div>
+<div class="absolute top-1/2 -translate-y-1/2 h-4 w-1 bg-gray-800 rounded-full" style="left: 20%;"></div>
+</div>
+<p class="text-xs text-gray-500">在市场波动中表现稳健，优于同类产品平均水平（-12.5%）。</p>
+</div>
+<!-- 收益稳定性 -->
+<div class="bg-white p-4 rounded-2xl shadow-sm">
+<div class="flex justify-between items-center mb-2">
+<span class="text-sm font-bold text-gray-800">收益稳定性</span>
+<div class="flex text-gold">
+<iconify-icon icon="fluent:star-24-filled"></iconify-icon>
+<iconify-icon icon="fluent:star-24-filled"></iconify-icon>
+<iconify-icon icon="fluent:star-24-filled"></iconify-icon>
+<iconify-icon icon="fluent:star-24-filled"></iconify-icon>
+<iconify-icon icon="fluent:star-half-24-filled"></iconify-icon>
+</div>
+</div>
+<p class="text-xs text-gray-500">您的组合在过去12个月中有10个月实现正收益，盈利确定性高。</p>
+</div>
+<!-- 风险对比 -->
+<div class="bg-white p-4 rounded-2xl shadow-sm">
+<span class="text-sm font-bold text-gray-800 block mb-3">与同类产品对比</span>
+<div class="space-y-3">
+<div>
+<div class="flex justify-between text-[10px] text-gray-500 mb-1">
+<span>您的组合</span>
+<span>波动率更低</span>
+</div>
+<div class="h-3 w-full bg-gray-100 rounded-full">
+<div class="h-full bg-green-500 rounded-full" style="width: 45%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[10px] text-gray-500 mb-1">
+<span>同类平均</span>
+<span>波动率较高</span>
+</div>
+<div class="h-3 w-full bg-gray-100 rounded-full">
+<div class="h-full bg-gray-300 rounded-full" style="width: 75%;"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 情景分析与应对 -->
+<div class="mx-4 mt-4 p-4 bg-white rounded-2xl shadow-sm border border-gray-50">
+<h4 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+<span class="w-1.5 h-4 bg-blue-600 rounded-full mr-2 inline-block"></span>
+        情景分析与应对
+    </h4>
+<!-- 压力测试 -->
+<div class="mb-3 pb-3 border-b border-gray-100">
+<div class="flex items-start">
+<span class="text-base mr-2">🔬</span>
+<div>
+<p class="text-xs font-medium text-gray-700">压力测试</p>
+<p class="text-xs text-gray-500 mt-0.5">在极端市场（如大盘下跌20%）下，您的组合预计最大回撤约为 <span class="text-orange-500 font-medium">-15%</span>，处于可控范围。</p>
+</div>
+</div>
+</div>
+<!-- 当前应对 -->
+<div class="mb-3 pb-3 border-b border-gray-100">
+<div class="flex items-start">
+<span class="text-base mr-2">🛡️</span>
+<div>
+<p class="text-xs font-medium text-gray-700">当前应对</p>
+<p class="text-xs text-gray-500 mt-0.5">基金经理已增配了 <span class="text-blue-600 font-medium">5%</span> 的债券资产，以提升组合的防御性。</p>
+</div>
+</div>
+</div>
+<!-- 客户建议 -->
+<div class="flex items-start">
+<span class="text-base mr-2">💡</span>
+<div>
+<p class="text-xs font-medium text-gray-700">客户建议</p>
+<p class="text-xs text-gray-500 mt-0.5">建议您保持当前配置，无需因短期波动而调整。长期持有更能发挥复利效应。</p>
+</div>
+</div>
+</div>
+<!-- CTA 按钮 -->
+<div class="px-6 mt-8 mb-4">
+<button class="w-full bg-[#1A3A5C] text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-transform">
+                    查看完整风控报告
+                </button>
+</div>
+</div>
+<!-- 底部导航 -->
+<div class="tab-bar">
+<div class="tab-item active" onclick="switchPage('home')">
+<iconify-icon class="tab-icon" icon="fluent:home-24-filled"></iconify-icon>
+<span>首页概览</span>
+</div>
+<div class="tab-item" onclick="switchPage('volatility')">
+<iconify-icon class="tab-icon" icon="fluent:data-usage-24-filled"></iconify-icon>
+<span>波动原因</span>
+</div>
+<div class="tab-item" onclick="switchPage('risk')">
+<iconify-icon class="tab-icon" icon="fluent:shield-check-24-filled"></iconify-icon>
+<span>风险体检</span>
+</div>
+</div>
+</div>
+<script>
+        // 初始化 ECharts 实例
+        let trendChart, allocationChart, riskGauge;
+
+        function initCharts() {
+            // 1. 收益趋势图
+            trendChart = echarts.init(document.getElementById('trendChart'));
+            trendChart.setOption({
+                grid: { top: 10, left: 35, right: 10, bottom: 25 },
+                xAxis: {
+                    type: 'category',
+                    data: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    axisLine: { lineStyle: { color: '#E5E7EB' } },
+                    axisLabel: { color: '#9CA3AF', fontSize: 10 }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: { color: '#9CA3AF', fontSize: 10, formatter: '{value}%' },
+                    splitLine: { lineStyle: { type: 'dashed', color: '#F3F4F6' } }
+                },
+                series: [{
+                    data: [1.2, 2.5, 1.8, 3.2, 2.9, 4.1],
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    itemStyle: { color: '#34C759' },
+                    lineStyle: { width: 3 },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(52, 199, 89, 0.3)' },
+                            { offset: 1, color: 'rgba(52, 199, 89, 0)' }
+                        ])
+                    }
+                }]
+            });
+
+            // 2. 资产配置图
+            allocationChart = echarts.init(document.getElementById('allocationChart'));
+            allocationChart.setOption({
+                tooltip: { trigger: 'item' },
+                series: [{
+                    name: '资产配置',
+                    type: 'pie',
+                    radius: ['55%', '85%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                    label: { show: false },
+                    data: [
+                        { value: 52, name: '股票多头', itemStyle: { color: '#2A5C8C' } },
+                        { value: 28, name: '债券资产', itemStyle: { color: '#34C759' } },
+                        { value: 12, name: '私募股权', itemStyle: { color: '#C9A96E' } },
+                        { value: 8, name: '现金/货币', itemStyle: { color: '#8E8E93' } }
+                    ],
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '14',
+                            fontWeight: 'bold',
+                            formatter: '{b}\n{d}%'
+                        }
+                    }
+                }],
+                graphic: {
+                    type: 'text',
+                    left: 'center',
+                    top: 'center',
+                    style: {
+                        text: '总资产\n¥1,258万',
+                        textAlign: 'center',
+                        fill: '#1A3A5C',
+                        fontSize: 14,
+                        fontWeight: 'bold'
+                    }
+                }
+            });
+
+            // 3. 风险仪表盘
+            riskGauge = echarts.init(document.getElementById('riskGauge'));
+            riskGauge.setOption({
+                series: [{
+                    type: 'gauge',
+                    startAngle: 180,
+                    endAngle: 0,
+                    min: 0,
+                    max: 100,
+                    splitNumber: 5,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                            { offset: 0, color: '#34C759' },
+                            { offset: 0.5, color: '#FFCC00' },
+                            { offset: 1, color: '#FF3B30' }
+                        ])
+                    },
+                    progress: { show: true, width: 12 },
+                    pointer: { show: true, length: '60%', width: 4, itemStyle: { color: '#1A3A5C' } },
+                    axisLine: { lineStyle: { width: 12, color: [[1, '#f3f4f6']] } },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
+                    axisLabel: { show: false },
+                    anchor: { show: true, showAbove: true, size: 12, itemStyle: { color: '#1A3A5C' } },
+                    title: { show: false },
+                    detail: { show: false },
+                    data: [{ value: 82 }]
+                }]
+            });
+        }
+
+        // 页面切换逻辑
+        function switchPage(pageId) {
+            // 切换 Tab 状态
+            const tabs = document.querySelectorAll('.tab-item');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            const targetTab = Array.from(tabs).find(t => t.innerText.includes(
+                pageId === 'home' ? '首页' : (pageId === 'volatility' ? '波动' : '风险')
+            ));
+            if (targetTab) targetTab.classList.add('active');
+
+            // 切换内容
+            const pages = document.querySelectorAll('.page-content');
+            pages.forEach(page => {
+                page.classList.add('hidden');
+                page.classList.remove('active');
+            });
+
+            const activePage = document.getElementById('page-' + pageId);
+            activePage.classList.remove('hidden');
+            setTimeout(() => activePage.classList.add('active'), 50);
+
+            // 切换状态栏颜色
+            const statusBar = document.getElementById('statusBar');
+            statusBar.style.color = 'white';
+
+            // 延迟重绘图表，确保容器已显示且动画平稳
+            setTimeout(() => {
+                if (pageId === 'home') {
+                    trendChart.resize();
+                    allocationChart.resize();
+                } else if (pageId === 'risk') {
+                    riskGauge.resize();
+                }
+            }, 100);
+        }
+
+        // 更新时间
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}`;
+        }
+
+        // 初始化
+        window.onload = () => {
+            initCharts();
+            updateTime();
+            setInterval(updateTime, 60000);
+            
+            // 响应式处理
+            window.addEventListener('resize', () => {
+                if (trendChart) trendChart.resize();
+                if (allocationChart) allocationChart.resize();
+                if (riskGauge) riskGauge.resize();
+            });
+        };
+    </script>
+</body>
+</html>
