@@ -1,639 +1,936 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>私募基金客户看板 - 私享尊荣</title>
-<!-- 引入资源 -->
-<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
-<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
-<script src="https://modao.cc/agent-py/static/source/js/echarts.min.js"></script>
-<style>
-        @font-face {
-            font-family: 'PingFang SC';
-            src: local('PingFang SC');
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", sans-serif;
-            background-color: #f3f4f6;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>私募基金客户投后陪伴看板</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <style>
+        * {
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #065f46 100%);
+            min-height: 100vh;
+            color: #1f2937;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* 页面通用样式 */
+        .page {
+            display: none;
+            padding: 20px 20px 100px;
             min-height: 100vh;
         }
-        /* 手机模拟器容器 */
-        .phone-container {
-            width: 390px;
-            height: 812px;
-            background-color: #F5F7FA;
-            border-radius: 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            position: relative;
-            overflow: hidden;
-            border: 8px solid #1a1a1a;
+        
+        .page.active {
+            display: block;
         }
-        /* 状态栏 */
-        .status-bar {
-            height: 44px;
-            padding: 0 24px;
+        
+        /* 卡片样式 */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 顶部用户信息 */
+        .user-info {
+            margin-bottom: 20px;
+        }
+        
+        .greeting {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+        
+        .total-assets {
+            font-size: 32px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+        
+        .fund-info {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* 本月收益 */
+        .monthly-return {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .return-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+        
+        .return-value {
+            font-size: 48px;
+            font-weight: 800;
+        }
+        
+        .positive {
+            color: #ef4444;
+        }
+        
+        .negative {
+            color: #10b981;
+        }
+        
+        /* 图表容器 */
+        .chart-container {
+            height: 240px;
+            margin-bottom: 20px;
+        }
+        
+        #mainChart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 数据卡片区域 */
+        .data-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .data-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            position: relative;
+        }
+        
+        .data-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .data-card:active {
+            transform: translateY(0);
+        }
+        
+        .data-card.clickable {
+            cursor: pointer;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .data-card.clickable::after {
+            content: "🔍";
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 12px;
+            opacity: 0.6;
+        }
+        
+        .card-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .card-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        /* 悬浮按钮 */
+        .floating-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #1e3a8a, #065f46);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(30, 58, 138, 0.3);
+            cursor: pointer;
+            z-index: 100;
+            border: none;
+            user-select: none;
+        }
+        
+        .floating-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* 操作复盘页样式 */
+        .back-btn {
+            background: none;
+            border: none;
+            color: #1e3a8a;
+            font-size: 16px;
+            padding: 10px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        .strategy-compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .strategy-column {
+            padding: 16px;
+            border-radius: 16px;
+        }
+        
+        .highlights {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border: 2px solid #10b981;
+        }
+        
+        .reflections {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 2px solid #f59e0b;
+        }
+        
+        .column-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .strategy-list {
+            list-style: none;
+        }
+        
+        .strategy-item {
+            font-size: 14px;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .strategy-item::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #059669;
+        }
+        
+        .reflections .strategy-item::before {
+            color: #d97706;
+        }
+        
+        /* 表格样式 */
+        .rebalance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        
+        .rebalance-table th {
+            background: #f8fafc;
+            padding: 12px 8px;
+            text-align: left;
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 600;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .rebalance-table td {
+            padding: 12px 8px;
+            font-size: 13px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .action-buy {
+            color: #ef4444;
+            font-weight: 600;
+        }
+        
+        .action-sell {
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        /* 弹层样式 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s;
+        }
+        
+        .popup {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            width: 100%;
+            max-width: 320px;
+            animation: slideUp 0.3s;
+        }
+        
+        .popup-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 14px;
-            font-weight: 600;
-            color: white;
-            position: absolute;
-            top: 0;
-            width: 100%;
-            z-index: 50;
+            margin-bottom: 20px;
         }
-        /* 页面切换动画 */
-        .page-content {
-            transition: opacity 0.3s ease-in-out;
-            height: calc(812px - 84px); /* 减去底部导航高度 */
-            overflow-y: auto;
-            scrollbar-width: none;
-            padding-bottom: 20px;
+        
+        .popup-title {
+            font-size: 20px;
+            font-weight: 700;
         }
-        .page-content::-webkit-scrollbar {
-            display: none;
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #6b7280;
+            cursor: pointer;
         }
-        .hidden {
-            display: none;
-            opacity: 0;
+        
+        .popup-content {
+            margin-bottom: 20px;
         }
-        .active {
-            display: block;
-            opacity: 1;
-        }
-        /* 渐变背景 */
-        .bg-gradient-finance {
-            background: linear-gradient(180deg, #1A3A5C 0%, #2A5C8C 100%);
-        }
-        /* 底部导航 */
-        .tab-bar {
-            height: 84px;
-            background: white;
-            border-top: 1px solid #e5e7eb;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
+        
+        .popup-footer {
             display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding-bottom: 20px;
-            z-index: 50;
+            gap: 12px;
         }
-        .tab-item {
+        
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a8a, #065f46);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* 客服浮窗样式 */
+        .service-overlay {
+            align-items: flex-end;
+        }
+        
+        .service-popup {
+            max-width: 480px;
+            border-radius: 24px 24px 0 0;
+            animation: slideUpFromBottom 0.3s;
+        }
+        
+        .service-options {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            color: #6B7280;
-            font-size: 11px;
-            cursor: pointer;
-            transition: color 0.2s;
+            gap: 12px;
         }
-        .tab-item.active {
-            color: #1A3A5C;
-        }
-        .tab-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
-        /* 核心数字金色 */
-        .text-gold {
-            color: #C9A96E;
-        }
-        /* 卡片样式 */
-        .finance-card {
-            background: white;
+        
+        .service-option {
+            padding: 20px;
+            background: #f8fafc;
             border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            margin: 12px 16px;
-            padding: 16px;
+            border: none;
+            font-size: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .income-green { color: #34C759; }
-        .loss-red { color: #FF3B30; }
+        
+        .service-option:active {
+            background: #e5e7eb;
+        }
+        
+        /* 风险弹层特殊样式 */
+        .risk-content {
+            text-align: center;
+        }
+        
+        .rating-stars {
+            font-size: 32px;
+            color: #fbbf24;
+            margin: 12px 0;
+        }
+        
+        .comparison {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+        }
+        
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideUpFromBottom {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+        
+        /* 热区提示 */
+        .hotspot-hint {
+            position: absolute;
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px dashed #ef4444;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 10;
+            animation: pulse 2s infinite;
+        }
+        
+        .hotspot-label {
+            position: absolute;
+            background: #ef4444;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        /* 工具提示 */
+        .chart-tooltip {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            display: none;
+            min-width: 200px;
+        }
+        
+        .tooltip-content {
+            font-size: 14px;
+        }
+        
+        .tooltip-btn {
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #1e3a8a, #065f46);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-<div class="phone-container">
-<!-- 状态栏 -->
-<div class="status-bar" id="statusBar">
-<span id="currentTime">09:41</span>
-<div class="flex space-x-1 items-center">
-<iconify-icon icon="fluent:cellular-data-24-filled"></iconify-icon>
-<iconify-icon icon="fluent:wifi-1-24-filled"></iconify-icon>
-<iconify-icon icon="fluent:battery-1-24-filled"></iconify-icon>
-</div>
-</div>
-<!-- 页面1：首页概览 -->
-<div class="page-content active" id="page-home">
-<!-- 头部概览 -->
-<div class="bg-gradient-finance pt-12 pb-8 px-6 text-white rounded-b-[32px]">
-<div class="flex justify-between items-end mb-6">
-<div>
-<div class="flex items-center gap-2">
-<span class="text-white text-lg font-medium">尊敬的张先生</span>
-<span class="px-2 py-0.5 bg-white bg-opacity-20 rounded text-xs text-blue-200 cursor-not-allowed flex items-center gap-1">
-                                个人视角
-                                <span class="text-blue-300">▾</span>
-</span>
-</div>
-<p class="text-xs text-blue-200 mt-0.5">[产品逻辑] 未来可切换查看单个产品或全景资产视图</p>
-<h1 class="text-2xl font-bold mt-1">下午好，欢迎回来</h1>
-</div>
-<p class="text-xs opacity-60">报告日期：2025年6月23日</p>
-</div>
-<div class="mb-4">
-<p class="text-xs opacity-70 mb-1">总资产 (元)</p>
-<div class="flex items-baseline">
-<span class="text-4xl font-bold">¥12,580,000</span>
-</div>
-<p class="text-xs text-blue-200 mt-1">数据更新至：2025-06-20 15:00</p>
-<p class="text-sm mt-2 income-green font-medium">较上月 +¥36,800 (+0.29%)</p>
-</div>
-</div>
-<!-- 核心数据卡片（横向滚动） -->
-<div class="flex overflow-x-auto space-x-3 px-4 -mt-6 no-scrollbar" style="scrollbar-width: none;">
-<div class="flex-shrink-0 w-32 bg-green-50 p-4 rounded-2xl border border-green-100 shadow-sm">
-<p class="text-xs text-gray-500 mb-1">本月收益</p>
-<p class="text-lg font-bold income-green">+¥36.8k</p>
-<div class="mt-2 h-1 w-full bg-green-200 rounded-full overflow-hidden">
-<div class="h-full bg-green-500" style="width: 65%"></div>
-</div>
-</div>
-<div class="flex-shrink-0 w-32 bg-blue-50 p-4 rounded-2xl border border-blue-100 shadow-sm">
-<p class="text-xs text-gray-500 mb-1">累计总收益</p>
-<p class="text-lg font-bold text-[#1A3A5C]">¥1.85M</p>
-<div class="mt-2 h-1 w-full bg-blue-200 rounded-full overflow-hidden">
-<div class="h-full bg-blue-500" style="width: 80%"></div>
-</div>
-</div>
-<div class="flex-shrink-0 w-32 bg-yellow-50 p-4 rounded-2xl border border-yellow-100 shadow-sm">
-<p class="text-xs text-gray-500 mb-1">超额收益</p>
-<p class="text-lg font-bold text-gold">+3.2%</p>
-<p class="text-xs text-gray-500 mt-0.5">相对基准：沪深300全收益指数</p>
-<div class="mt-2 h-1 w-full bg-yellow-200 rounded-full overflow-hidden">
-<div class="h-full bg-yellow-500" style="width: 45%"></div>
-</div>
-</div>
-</div>
-<!-- 图表：近6个月收益趋势 -->
-<div class="finance-card mt-6">
-<h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
-<iconify-icon class="mr-2 text-blue-600" icon="fluent:line-trend-24-filled"></iconify-icon>
-                    近6个月收益走势
-                </h3>
-<div id="trendChart" style="width: 100%; height: 180px;"></div>
-</div>
-<!-- 智能诊断卡片 -->
-<div class="mx-4 mt-3 p-4 bg-white rounded-2xl shadow-sm border border-gray-50">
-<div class="flex justify-between items-start">
-<div class="flex-1">
-<h4 class="text-sm font-bold text-gray-800 mb-1">📈 本月表现解读</h4>
-<p class="text-xs text-gray-600 leading-relaxed">您的收益增长主要受益于<b class="text-green-600">重仓科技股上涨</b>，但部分资产出现<b class="text-red-600">商品期货回调</b>的短期影响。</p>
-</div>
-<a class="text-xs font-medium text-blue-600 flex items-center whitespace-nowrap ml-3 mt-1" href="javascript:void(0)" onclick="switchPage('volatility')">
-            查看详情
-            <span class="ml-0.5">→</span>
-</a>
-</div>
-</div>
-<!-- 图表：资产配置 -->
-<div class="finance-card">
-<h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
-<iconify-icon class="mr-2 text-blue-600" icon="fluent:chart-pie-24-filled"></iconify-icon>
-                    资产配置
-                </h3>
-<div id="allocationChart" style="width: 100%; height: 220px;"></div>
-<div class="grid grid-cols-2 gap-2 mt-4">
-<div class="flex items-center text-xs text-gray-600">
-<span class="w-2 h-2 rounded-full bg-[#2A5C8C] mr-2"></span> 股票多头 52%
+    <div class="container">
+        <!-- 页面A：账户总览页 -->
+        <div id="pageA" class="page active">
+            <div class="user-info">
+                <div class="greeting">尊敬的客户，您好！</div>
+                <div class="total-assets">¥12,345,678</div>
+                <div class="fund-info">XX定制组合 · 风险评级：中低</div>
+            </div>
+            
+            <div class="monthly-return">
+                <div class="return-label">本月收益</div>
+                <div class="return-value positive">+2.3%</div>
+            </div>
+            
+            <div class="card chart-container">
+                <div id="mainChart"></div>
+            </div>
+            
+            <!-- 热区提示：调仓标记 -->
+            <div class="hotspot-hint" id="rebalanceHotspot" style="width: 40px; height: 40px; top: 380px; left: 180px;">
+                <div class="hotspot-label" style="top: -30px; left: 0;">点击调仓标记</div>
+            </div>
+            
+            <div class="data-cards">
+                <div class="data-card clickable" onclick="showPopup('cumulativePopup')">
+                    <div class="card-value positive">+15.8%</div>
+                    <div class="card-label">累计收益</div>
+                </div>
+                <div class="data-card clickable" onclick="showPopup('outperformPopup')">
+                    <div class="card-value positive">+3.2%</div>
+                    <div class="card-label">跑赢大盘</div>
+                </div>
+                <div class="data-card clickable" onclick="showPopup('riskPopup')">
+                    <div class="card-value">82分</div>
+                    <div class="card-label">风险体检</div>
+                </div>
+            </div>
+            
+            <!-- 热区提示：数据卡片 -->
+            <div class="hotspot-hint" style="width: 100px; height: 60px; top: 550px; left: 40px;">
+                <div class="hotspot-label" style="top: -30px; left: 20px;">点击查看详情</div>
+            </div>
+            
+            <!-- 调仓工具提示 -->
+            <div class="chart-tooltip" id="rebalanceTooltip">
+                <div class="tooltip-content">
+                    <div style="font-weight: 600; margin-bottom: 8px;">[4月15日] 调仓</div>
+                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">减持消费板块，加仓AI算力</div>
+                    <button class="tooltip-btn" onclick="goToDetail()">查看详情 ></button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面B：操作复盘详情页 -->
+        <div id="pageB" class="page">
+            <button class="back-btn" onclick="goBack()">
+                <iconify-icon icon="mdi:arrow-left"></iconify-icon>
+                返回
+            </button>
+            
+            <div class="card">
+                <h2 class="page-title">[4月]操作复盘报告</h2>
+                
+                <div class="strategy-compare">
+                    <div class="strategy-column highlights">
+                        <div class="column-title">
+                            <iconify-icon icon="mdi:check-circle" style="color: #059669;"></iconify-icon>
+                            本次操作亮点
+                        </div>
+                        <ul class="strategy-list">
+                            <li class="strategy-item">精准减持消费板块5%，成功规避后续回调</li>
+                            <li class="strategy-item">及时加仓AI算力龙头，单月贡献+2.1%收益</li>
+                            <li class="strategy-item">优化债券久期，提升组合防御性</li>
+                        </ul>
                     </div>
-<div class="flex items-center text-xs text-gray-600">
-<span class="w-2 h-2 rounded-full bg-[#34C759] mr-2"></span> 债券资产 28%
+                    
+                    <div class="strategy-column reflections">
+                        <div class="column-title">
+                            <iconify-icon icon="mdi:lightbulb" style="color: #d97706;"></iconify-icon>
+                            反思与优化
+                        </div>
+                        <ul class="strategy-list">
+                            <li class="strategy-item">对新能源车板块调整幅度预判不足</li>
+                            <li class="strategy-item">港股配置比例可进一步优化</li>
+                        </ul>
                     </div>
-<div class="flex items-center text-xs text-gray-600">
-<span class="w-2 h-2 rounded-full bg-[#C9A96E] mr-2"></span> 私募股权 12%
+                </div>
+                
+                <div style="margin-top: 24px;">
+                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">调仓明细</div>
+                    <table class="rebalance-table">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>标的</th>
+                                <th>操作</th>
+                                <th>比例</th>
+                                <th>原因</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>04-15</td>
+                                <td>消费龙头A</td>
+                                <td class="action-sell">减持</td>
+                                <td>-5%</td>
+                                <td>估值偏高</td>
+                            </tr>
+                            <tr>
+                                <td>04-15</td>
+                                <td>AI芯片B</td>
+                                <td class="action-buy">增持</td>
+                                <td>+5%</td>
+                                <td>景气上行</td>
+                            </tr>
+                            <tr>
+                                <td>04-20</td>
+                                <td>国债ETF</td>
+                                <td class="action-buy">增持</td>
+                                <td>+3%</td>
+                                <td>防御配置</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 悬浮按钮 -->
+        <button class="floating-btn" onclick="showServicePopup()">
+            我的顾问
+        </button>
+    </div>
+    
+    <!-- 累计收益弹层 -->
+    <div class="overlay" id="cumulativePopup">
+        <div class="popup">
+            <div class="popup-header">
+                <div class="popup-title">📈 累计收益 +15.8%</div>
+                <button class="close-btn" onclick="closePopup('cumulativePopup')">×</button>
+            </div>
+            <div class="popup-content">
+                <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
+                    <div style="margin-bottom: 12px;">
+                        <div style="font-size: 12px; color: #6b7280;">收益构成分析</div>
+                        <div style="font-size: 14px; margin-top: 4px;">💰 <b>本金增长</b>：+12.1% （来自资产价格上涨）</div>
+                        <div style="font-size: 14px; margin-top: 8px;">🎯 <b>分红再投资</b>：+3.7% （红利自动滚入，享受复利）</div>
                     </div>
-<div class="flex items-center text-xs text-gray-600">
-<span class="w-2 h-2 rounded-full bg-[#8E8E93] mr-2"></span> 现金/货币 8%
+                    <div style="margin-top: 16px;">
+                        <div style="font-size: 12px; color: #6b7280;">时间复利</div>
+                        <div style="font-size: 14px; color: #059669; font-weight: 600; margin-top: 4px;">持有超过18个月，远超同期定期存款收益</div>
                     </div>
-</div>
-</div>
-<!-- 配置对比 -->
-<div class="mx-4 mt-2 mb-4">
-<p class="text-xs text-gray-500 mb-1">您的配置 vs 同类平均</p>
-<div class="flex items-center gap-3">
-<div class="flex-1">
-<div class="flex justify-between text-xs text-gray-400 mb-0.5">
-<span>权益类</span>
-<span>您 52% | 同类 48%</span>
-</div>
-<div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-<div class="h-full bg-blue-600 rounded-full" style="width:52%"></div>
-</div>
-</div>
-<div class="flex-1">
-<div class="flex justify-between text-xs text-gray-400 mb-0.5">
-<span>固收类</span>
-<span>您 28% | 同类 32%</span>
-</div>
-<div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-<div class="h-full bg-green-500 rounded-full" style="width:28%"></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- 页面2：波动原因 -->
-<div class="page-content hidden" id="page-volatility">
-<div class="bg-gradient-finance pt-12 pb-6 px-6 text-white rounded-b-[32px] text-center">
-<h1 class="text-xl font-bold">本月波动原因</h1>
-<p class="text-xs opacity-70 mt-1">为您深度解析资产变动背后的逻辑</p>
-</div>
-<!-- 盈利来源 -->
-<div class="mt-6 px-4">
-<h3 class="text-sm font-bold income-green flex items-center mb-3">
-<iconify-icon class="mr-1" icon="fluent:trending-arrow-up-24-filled"></iconify-icon>
-                    本月赚钱的3个方向
-                </h3>
-<div class="space-y-3">
-<div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
-<div class="flex items-center">
-<div class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
-<iconify-icon class="text-green-600 text-xl" icon="fluent:chip-24-regular"></iconify-icon>
-</div>
-<div>
-<p class="text-sm font-bold text-gray-800">重仓科技股上涨</p>
-<p class="text-xs text-gray-500">AI板块带动持仓估值修复</p>
-</div>
-</div>
-<span class="text-sm font-bold income-green">+¥24,500</span>
-</div>
-<div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
-<div class="flex items-center">
-<div class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
-<iconify-icon class="text-green-600 text-xl" icon="fluent:math-formula-24-regular"></iconify-icon>
-</div>
-<div>
-<p class="text-sm font-bold text-gray-800">量化策略持续稳健</p>
-<p class="text-xs text-gray-500">市场波动率回升利好套利</p>
-</div>
-</div>
-<span class="text-sm font-bold income-green">+¥8,200</span>
-</div>
-<div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
-<div class="flex items-center">
-<div class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
-<iconify-icon class="text-green-600 text-xl" icon="fluent:money-hand-24-regular"></iconify-icon>
-</div>
-<div>
-<p class="text-sm font-bold text-gray-800">债券利息到账</p>
-<p class="text-xs text-gray-500">固收部分提供稳定现金流</p>
-</div>
-</div>
-<span class="text-sm font-bold income-green">+¥4,100</span>
-</div>
-</div>
-</div>
-<!-- 亏损来源 -->
-<div class="mt-8 px-4">
-<h3 class="text-sm font-bold loss-red flex items-center mb-3">
-<iconify-icon class="mr-1" icon="fluent:trending-arrow-down-24-filled"></iconify-icon>
-                    本月2个调整原因
-                </h3>
-<div class="space-y-3">
-<div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
-<div class="flex items-center">
-<div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center mr-3">
-<iconify-icon class="text-red-600 text-xl" icon="fluent:box-24-regular"></iconify-icon>
-</div>
-<div>
-<p class="text-sm font-bold text-gray-800">商品期货市场回调</p>
-<p class="text-xs text-gray-500">原油价格波动压制CTA策略</p>
-</div>
-</div>
-<span class="text-sm font-bold loss-red">-¥5,600</span>
-</div>
-<div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
-<div class="flex items-center">
-<div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center mr-3">
-<iconify-icon class="text-red-600 text-xl" icon="fluent:cart-24-regular"></iconify-icon>
-</div>
-<div>
-<p class="text-sm font-bold text-gray-800">消费股短期调整</p>
-<p class="text-xs text-gray-500">白酒板块受行业情绪波动影响</p>
-</div>
-</div>
-<span class="text-sm font-bold loss-red">-¥3,200</span>
-</div>
-</div>
-</div>
-<!-- 提示卡片 -->
-<div class="m-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
-<div class="flex items-start">
-<iconify-icon class="text-blue-600 mt-1 mr-2" icon="fluent:info-24-filled"></iconify-icon>
-<p class="text-xs text-blue-800 leading-relaxed">
-                        总体来看，本月您的投资组合收益稳健，短期波动属于正常市场调整。基金经理已对持仓进行了优化，增加了防御性资产权重，以应对后续可能的震荡。
-                    </p>
-</div>
-</div>
-</div>
-<!-- 页面3：风险体检 -->
-<div class="page-content hidden" id="page-risk">
-<div class="bg-gradient-finance pt-12 pb-6 px-6 text-white rounded-b-[32px] text-center">
-<h1 class="text-xl font-bold">风险健康体检</h1>
-<p class="text-xs opacity-70 mt-1">您的投资组合风险评级：BBB（稳健型）</p>
-</div>
-<!-- 仪表盘 -->
-<div class="finance-card mt-6 flex flex-col items-center py-8">
-<div id="riskGauge" style="width: 260px; height: 180px;"></div>
-<div class="text-center -mt-4">
-<p class="text-2xl font-bold text-green-600">82分</p>
-<p class="text-sm text-gray-500">风险等级：稳健</p>
-</div>
-</div>
-<!-- 指标卡片 -->
-<div class="space-y-4 px-4 mt-2">
-<!-- 历史最大回撤 -->
-<div class="bg-white p-4 rounded-2xl shadow-sm">
-<div class="flex justify-between items-center mb-2">
-<span class="text-sm font-bold text-gray-800">历史最大回撤</span>
-<span class="text-sm font-bold income-green">-8.2%</span>
-</div>
-<div class="relative h-2 w-full bg-gray-100 rounded-full mb-3">
-<div class="absolute inset-y-0 left-0 bg-gradient-to-r from-green-400 via-yellow-400 to-red-400 rounded-full w-full opacity-30"></div>
-<div class="absolute top-1/2 -translate-y-1/2 h-4 w-1 bg-gray-800 rounded-full" style="left: 20%;"></div>
-</div>
-<p class="text-xs text-gray-500">在市场波动中表现稳健，优于同类产品平均水平（-12.5%）。</p>
-</div>
-<!-- 收益稳定性 -->
-<div class="bg-white p-4 rounded-2xl shadow-sm">
-<div class="flex justify-between items-center mb-2">
-<span class="text-sm font-bold text-gray-800">收益稳定性</span>
-<div class="flex text-gold">
-<iconify-icon icon="fluent:star-24-filled"></iconify-icon>
-<iconify-icon icon="fluent:star-24-filled"></iconify-icon>
-<iconify-icon icon="fluent:star-24-filled"></iconify-icon>
-<iconify-icon icon="fluent:star-24-filled"></iconify-icon>
-<iconify-icon icon="fluent:star-half-24-filled"></iconify-icon>
-</div>
-</div>
-<p class="text-xs text-gray-500">您的组合在过去12个月中有10个月实现正收益，盈利确定性高。</p>
-</div>
-<!-- 风险对比 -->
-<div class="bg-white p-4 rounded-2xl shadow-sm">
-<span class="text-sm font-bold text-gray-800 block mb-3">与同类产品对比</span>
-<div class="space-y-3">
-<div>
-<div class="flex justify-between text-[10px] text-gray-500 mb-1">
-<span>您的组合</span>
-<span>波动率更低</span>
-</div>
-<div class="h-3 w-full bg-gray-100 rounded-full">
-<div class="h-full bg-green-500 rounded-full" style="width: 45%;"></div>
-</div>
-</div>
-<div>
-<div class="flex justify-between text-[10px] text-gray-500 mb-1">
-<span>同类平均</span>
-<span>波动率较高</span>
-</div>
-<div class="h-3 w-full bg-gray-100 rounded-full">
-<div class="h-full bg-gray-300 rounded-full" style="width: 75%;"></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- 情景分析与应对 -->
-<div class="mx-4 mt-4 p-4 bg-white rounded-2xl shadow-sm border border-gray-50">
-<h4 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
-<span class="w-1.5 h-4 bg-blue-600 rounded-full mr-2 inline-block"></span>
-        情景分析与应对
-    </h4>
-<!-- 压力测试 -->
-<div class="mb-3 pb-3 border-b border-gray-100">
-<div class="flex items-start">
-<span class="text-base mr-2">🔬</span>
-<div>
-<p class="text-xs font-medium text-gray-700">压力测试</p>
-<p class="text-xs text-gray-500 mt-0.5">在极端市场（如大盘下跌20%）下，您的组合预计最大回撤约为 <span class="text-orange-500 font-medium">-15%</span>，处于可控范围。</p>
-</div>
-</div>
-</div>
-<!-- 当前应对 -->
-<div class="mb-3 pb-3 border-b border-gray-100">
-<div class="flex items-start">
-<span class="text-base mr-2">🛡️</span>
-<div>
-<p class="text-xs font-medium text-gray-700">当前应对</p>
-<p class="text-xs text-gray-500 mt-0.5">基金经理已增配了 <span class="text-blue-600 font-medium">5%</span> 的债券资产，以提升组合的防御性。</p>
-</div>
-</div>
-</div>
-<!-- 客户建议 -->
-<div class="flex items-start">
-<span class="text-base mr-2">💡</span>
-<div>
-<p class="text-xs font-medium text-gray-700">客户建议</p>
-<p class="text-xs text-gray-500 mt-0.5">建议您保持当前配置，无需因短期波动而调整。长期持有更能发挥复利效应。</p>
-</div>
-</div>
-</div>
-<!-- CTA 按钮 -->
-<div class="px-6 mt-8 mb-4">
-<button class="w-full bg-[#1A3A5C] text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-transform">
-                    查看完整风控报告
-                </button>
-</div>
-</div>
-<!-- 底部导航 -->
-<div class="tab-bar">
-<div class="tab-item active" onclick="switchPage('home')">
-<iconify-icon class="tab-icon" icon="fluent:home-24-filled"></iconify-icon>
-<span>首页概览</span>
-</div>
-<div class="tab-item" onclick="switchPage('volatility')">
-<iconify-icon class="tab-icon" icon="fluent:data-usage-24-filled"></iconify-icon>
-<span>波动原因</span>
-</div>
-<div class="tab-item" onclick="switchPage('risk')">
-<iconify-icon class="tab-icon" icon="fluent:shield-check-24-filled"></iconify-icon>
-<span>风险体检</span>
-</div>
-</div>
-</div>
-<script>
-        // 初始化 ECharts 实例
-        let trendChart, allocationChart, riskGauge;
+                </div>
+                <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px;">
+                    <div style="font-size: 12px; color: #92400e; font-style: italic;">"长期持有是熨平波动、获取复利的关键。"</div>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button class="btn btn-primary" onclick="closePopup('cumulativePopup')">明白了</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 跑赢大盘弹层 -->
+    <div class="overlay" id="outperformPopup">
+        <div class="popup">
+            <div class="popup-header">
+                <div class="popup-title">🏆 跑赢大盘 +3.2%</div>
+                <button class="close-btn" onclick="closePopup('outperformPopup')">×</button>
+            </div>
+            <div class="popup-content">
+                <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
+                    <div style="margin-bottom: 12px;">
+                        <div style="font-size: 12px; color: #6b7280;">基准对比</div>
+                        <div style="font-size: 14px; margin-top: 4px; font-weight: 600;">沪深300全收益指数</div>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <div style="font-size: 12px; color: #6b7280;">主要贡献来源</div>
+                        <div style="font-size: 14px; margin-top: 8px;">✅ <b>科技股超配</b>：组合在AI算力板块配置超越指数权重</div>
+                        <div style="font-size: 14px; margin-top: 8px;">✅ <b>主动调仓</b>：4月减持消费、加仓科技，捕捉结构性行情</div>
+                    </div>
+                </div>
+                <div style="margin-top: 16px; padding: 12px; background: #d1fae5; border-radius: 8px;">
+                    <div style="font-size: 12px; color: #065f46; font-style: italic;">"超额收益体现了我们主动管理能力的价值。"</div>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button class="btn btn-primary" onclick="closePopup('outperformPopup')">好的</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 风险体检弹层 -->
+    <div class="overlay" id="riskPopup">
+        <div class="popup">
+            <div class="popup-header">
+                <div class="popup-title">🛡️ 风险健康体检</div>
+                <button class="close-btn" onclick="closePopup('riskPopup')">×</button>
+            </div>
+            <div class="popup-content risk-content">
+                <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">收益稳定性评级</div>
+                <div class="rating-stars">⭐⭐⭐⭐⭐</div>
+                <div style="font-size: 16px; font-weight: 600; color: #059669; margin-bottom: 24px;">非常稳定</div>
+                
+                <div class="comparison">
+                    <div style="font-size: 12px; color: #6b7280;">与同类产品对比</div>
+                    <div style="font-size: 20px; font-weight: 700; color: #1e3a8a; margin: 8px 0;">优于 85%</div>
+                    <div style="font-size: 14px; color: #374151;">的最大回撤控制优于同类基金</div>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button class="btn btn-primary" onclick="closePopup('riskPopup')">知道了</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 客服浮窗 -->
+    <div class="overlay service-overlay" id="servicePopup">
+        <div class="popup service-popup">
+            <div class="popup-header">
+                <div class="popup-title">需要什么帮助？</div>
+                <button class="close-btn" onclick="closePopup('servicePopup')">×</button>
+            </div>
+            <div class="popup-content">
+                <div class="service-options">
+                    <button class="service-option" onclick="selectService('调仓逻辑')">了解本次调仓逻辑</button>
+                    <button class="service-option" onclick="selectService('投资目标')">调整我的投资目标</button>
+                    <button class="service-option" onclick="selectService('其他咨询')">其他问题咨询</button>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button class="btn btn-secondary" onclick="closePopup('servicePopup')">关闭</button>
+            </div>
+        </div>
+    </div>
 
-        function initCharts() {
-            // 1. 收益趋势图
-            trendChart = echarts.init(document.getElementById('trendChart'));
-            trendChart.setOption({
-                grid: { top: 10, left: 35, right: 10, bottom: 25 },
+    <script>
+        // 初始化ECharts图表
+        let myChart;
+        function initChart() {
+            myChart = echarts.init(document.getElementById('mainChart'));
+            
+            const option = {
+                backgroundColor: 'transparent',
+                grid: {
+                    left: '5%',
+                    right: '5%',
+                    top: '15%',
+                    bottom: '15%'
+                },
                 xAxis: {
                     type: 'category',
                     data: ['1月', '2月', '3月', '4月', '5月', '6月'],
-                    axisLine: { lineStyle: { color: '#E5E7EB' } },
-                    axisLabel: { color: '#9CA3AF', fontSize: 10 }
+                    axisLine: { show: false },
+                    axisTick: { show: false },
+                    axisLabel: {
+                        color: '#6b7280',
+                        fontSize: 12
+                    }
                 },
                 yAxis: {
                     type: 'value',
-                    axisLabel: { color: '#9CA3AF', fontSize: 10, formatter: '{value}%' },
-                    splitLine: { lineStyle: { type: 'dashed', color: '#F3F4F6' } }
-                },
-                series: [{
-                    data: [1.2, 2.5, 1.8, 3.2, 2.9, 4.1],
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'circle',
-                    symbolSize: 6,
-                    itemStyle: { color: '#34C759' },
-                    lineStyle: { width: 3 },
-                    areaStyle: {
-                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            { offset: 0, color: 'rgba(52, 199, 89, 0.3)' },
-                            { offset: 1, color: 'rgba(52, 199, 89, 0)' }
-                        ])
+                    axisLine: { show: false },
+                    axisTick: { show: false },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#e5e7eb',
+                            type: 'dashed'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#6b7280',
+                        fontSize: 12,
+                        formatter: '{value}%'
                     }
-                }]
-            });
-
-            // 2. 资产配置图
-            allocationChart = echarts.init(document.getElementById('allocationChart'));
-            allocationChart.setOption({
-                tooltip: { trigger: 'item' },
-                series: [{
-                    name: '资产配置',
-                    type: 'pie',
-                    radius: ['55%', '85%'],
-                    avoidLabelOverlap: false,
-                    itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
-                    label: { show: false },
-                    data: [
-                        { value: 52, name: '股票多头', itemStyle: { color: '#2A5C8C' } },
-                        { value: 28, name: '债券资产', itemStyle: { color: '#34C759' } },
-                        { value: 12, name: '私募股权', itemStyle: { color: '#C9A96E' } },
-                        { value: 8, name: '现金/货币', itemStyle: { color: '#8E8E93' } }
-                    ],
-                    emphasis: {
-                        label: {
-                            show: true,
-                            fontSize: '14',
-                            fontWeight: 'bold',
-                            formatter: '{b}\n{d}%'
+                },
+                series: [
+                    {
+                        name: '收益率',
+                        type: 'line',
+                        smooth: true,
+                        data: [2.1, 3.5, 5.2, 2.3, 4.8, 6.1],
+                        lineStyle: {
+                            width: 4,
+                            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                                { offset: 0, color: '#1e3a8a' },
+                                { offset: 1, color: '#065f46' }
+                            ])
+                        },
+                        symbolSize: 0,
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(30, 58, 138, 0.3)' },
+                                { offset: 1, color: 'rgba(6, 95, 70, 0.1)' }
+                            ])
+                        }
+                    },
+                    {
+                        name: '调仓点',
+                        type: 'scatter',
+                        data: [
+                            { value: '3月', symbolSize: 20, itemStyle: { color: '#ef4444' } },
+                            { value: '4月', symbolSize: 20, itemStyle: { color: '#ef4444' } }
+                        ],
+                        symbol: 'circle',
+                        symbolSize: 20
+                    }
+                ],
+                graphic: [
+                    {
+                        type: 'text',
+                        style: {
+                            text: '🚩',
+                            fontSize: 20
+                        },
+                        left: '33%',
+                        top: '30%',
+                        onclick: function() {
+                            showTooltip(100, 100, '3月');
+                        }
+                    },
+                    {
+                        type: 'text',
+                        style: {
+                            text: '🚩',
+                            fontSize: 20
+                        },
+                        left: '50%',
+                        top: '50%',
+                        onclick: function() {
+                            showTooltip(200, 150, '4月');
                         }
                     }
-                }],
-                graphic: {
-                    type: 'text',
-                    left: 'center',
-                    top: 'center',
-                    style: {
-                        text: '总资产\n¥1,258万',
-                        textAlign: 'center',
-                        fill: '#1A3A5C',
-                        fontSize: 14,
-                        fontWeight: 'bold'
-                    }
-                }
-            });
-
-            // 3. 风险仪表盘
-            riskGauge = echarts.init(document.getElementById('riskGauge'));
-            riskGauge.setOption({
-                series: [{
-                    type: 'gauge',
-                    startAngle: 180,
-                    endAngle: 0,
-                    min: 0,
-                    max: 100,
-                    splitNumber: 5,
-                    itemStyle: {
-                        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                            { offset: 0, color: '#34C759' },
-                            { offset: 0.5, color: '#FFCC00' },
-                            { offset: 1, color: '#FF3B30' }
-                        ])
-                    },
-                    progress: { show: true, width: 12 },
-                    pointer: { show: true, length: '60%', width: 4, itemStyle: { color: '#1A3A5C' } },
-                    axisLine: { lineStyle: { width: 12, color: [[1, '#f3f4f6']] } },
-                    axisTick: { show: false },
-                    splitLine: { show: false },
-                    axisLabel: { show: false },
-                    anchor: { show: true, showAbove: true, size: 12, itemStyle: { color: '#1A3A5C' } },
-                    title: { show: false },
-                    detail: { show: false },
-                    data: [{ value: 82 }]
-                }]
+                ]
+            };
+            
+            myChart.setOption(option);
+            
+            // 调整图表大小
+            window.addEventListener('resize', function() {
+                myChart.resize();
             });
         }
-
-        // 页面切换逻辑
-        function switchPage(pageId) {
-            // 切换 Tab 状态
-            const tabs = document.querySelectorAll('.tab-item');
-            tabs.forEach(tab => tab.classList.remove('active'));
+        
+        // 显示工具提示
+        function showTooltip(x, y, month) {
+            const tooltip = document.getElementById('rebalanceTooltip');
+            tooltip.style.display = 'block';
+            tooltip.style.left = (x - 100) + 'px';
+            tooltip.style.top = (y - 80) + 'px';
             
-            const targetTab = Array.from(tabs).find(t => t.innerText.includes(
-                pageId === 'home' ? '首页' : (pageId === 'volatility' ? '波动' : '风险')
-            ));
-            if (targetTab) targetTab.classList.add('active');
-
-            // 切换内容
-            const pages = document.querySelectorAll('.page-content');
-            pages.forEach(page => {
-                page.classList.add('hidden');
+            // 5秒后自动隐藏
+            setTimeout(() => {
+                tooltip.style.display = 'none';
+            }, 5000);
+        }
+        
+        // 跳转到详情页
+        function goToDetail() {
+            document.getElementById('rebalanceTooltip').style.display = 'none';
+            switchPage('pageB');
+        }
+        
+        // 页面切换
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('active');
             });
-
-            const activePage = document.getElementById('page-' + pageId);
-            activePage.classList.remove('hidden');
-            setTimeout(() => activePage.classList.add('active'), 50);
-
-            // 切换状态栏颜色
-            const statusBar = document.getElementById('statusBar');
-            statusBar.style.color = 'white';
-
-            // 延迟重绘图表，确保容器已显示且动画平稳
-            setTimeout(() => {
-                if (pageId === 'home') {
-                    trendChart.resize();
-                    allocationChart.resize();
-                } else if (pageId === 'risk') {
-                    riskGauge.resize();
-                }
-            }, 100);
+            document.getElementById(pageId).classList.add('active');
         }
-
-        // 更新时间
-        function updateTime() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('currentTime').textContent = `${hours}:${minutes}`;
+        
+        // 返回上一页
+        function goBack() {
+            switchPage('pageA');
         }
-
-        // 初始化
-        window.onload = () => {
-            initCharts();
-            updateTime();
-            setInterval(updateTime, 60000);
+        
+        // 显示弹层
+        function showPopup(popupId) {
+            document.getElementById(popupId).classList.add('active');
+        }
+        
+        // 关闭弹层
+        function closePopup(popupId) {
+            document.getElementById(popupId).classList.remove('active');
+        }
+        
+        // 显示客服浮窗
+        function showServicePopup() {
+            showPopup('servicePopup');
+        }
+        
+        // 选择客服选项
+        function selectService(option) {
+            alert('已选择: ' + option + '\n顾问将尽快联系您！');
+            closePopup('servicePopup');
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
             
-            // 响应式处理
-            window.addEventListener('resize', () => {
-                if (trendChart) trendChart.resize();
-                if (allocationChart) allocationChart.resize();
-                if (riskGauge) riskGauge.resize();
-            });
-        };
+            // 隐藏热区提示
+            setTimeout(() => {
+                document.getElementById('rebalanceHotspot').style.display = 'none';
+            }, 5000);
+        });
+        
+        // 点击页面其他地方隐藏工具提示
+        document.addEventListener('click', function(e) {
+            const tooltip = document.getElementById('rebalanceTooltip');
+            if (!e.target.closest('.chart-tooltip') && !e.target.closest('[onclick*="showTooltip"]')) {
+                tooltip.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
