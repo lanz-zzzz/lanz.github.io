@@ -1,936 +1,244 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>私募基金客户投后陪伴看板</title>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #065f46 100%);
-            min-height: 100vh;
-            color: #1f2937;
-            overflow-x: hidden;
-        }
-        
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            min-height: 100vh;
-            position: relative;
-        }
-        
-        /* 页面通用样式 */
-        .page {
-            display: none;
-            padding: 20px 20px 100px;
-            min-height: 100vh;
-        }
-        
-        .page.active {
-            display: block;
-        }
-        
-        /* 卡片样式 */
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .card-shadow {
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* 顶部用户信息 */
-        .user-info {
-            margin-bottom: 20px;
-        }
-        
-        .greeting {
-            font-size: 24px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-        
-        .total-assets {
-            font-size: 32px;
-            font-weight: 800;
-            color: #ffffff;
-            margin-bottom: 4px;
-        }
-        
-        .fund-info {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-        
-        /* 本月收益 */
-        .monthly-return {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .return-label {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 8px;
-        }
-        
-        .return-value {
-            font-size: 48px;
-            font-weight: 800;
-        }
-        
-        .positive {
-            color: #ef4444;
-        }
-        
-        .negative {
-            color: #10b981;
-        }
-        
-        /* 图表容器 */
-        .chart-container {
-            height: 240px;
-            margin-bottom: 20px;
-        }
-        
-        #mainChart {
-            width: 100%;
-            height: 100%;
-        }
-        
-        /* 数据卡片区域 */
-        .data-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .data-card {
-            background: white;
-            border-radius: 16px;
-            padding: 16px 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-            position: relative;
-        }
-        
-        .data-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .data-card:active {
-            transform: translateY(0);
-        }
-        
-        .data-card.clickable {
-            cursor: pointer;
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        }
-        
-        .data-card.clickable::after {
-            content: "🔍";
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            font-size: 12px;
-            opacity: 0.6;
-        }
-        
-        .card-value {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        
-        .card-label {
-            font-size: 12px;
-            color: #6b7280;
-        }
-        
-        /* 悬浮按钮 */
-        .floating-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #1e3a8a, #065f46);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
-            box-shadow: 0 4px 20px rgba(30, 58, 138, 0.3);
-            cursor: pointer;
-            z-index: 100;
-            border: none;
-            user-select: none;
-        }
-        
-        .floating-btn:active {
-            transform: scale(0.95);
-        }
-        
-        /* 操作复盘页样式 */
-        .back-btn {
-            background: none;
-            border: none;
-            color: #1e3a8a;
-            font-size: 16px;
-            padding: 10px 0;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-        
-        .page-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 24px;
-            text-align: center;
-        }
-        
-        .strategy-compare {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        
-        .strategy-column {
-            padding: 16px;
-            border-radius: 16px;
-        }
-        
-        .highlights {
-            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-            border: 2px solid #10b981;
-        }
-        
-        .reflections {
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            border: 2px solid #f59e0b;
-        }
-        
-        .column-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .strategy-list {
-            list-style: none;
-        }
-        
-        .strategy-item {
-            font-size: 14px;
-            margin-bottom: 8px;
-            padding-left: 20px;
-            position: relative;
-        }
-        
-        .strategy-item::before {
-            content: "•";
-            position: absolute;
-            left: 0;
-            color: #059669;
-        }
-        
-        .reflections .strategy-item::before {
-            color: #d97706;
-        }
-        
-        /* 表格样式 */
-        .rebalance-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
-        
-        .rebalance-table th {
-            background: #f8fafc;
-            padding: 12px 8px;
-            text-align: left;
-            font-size: 12px;
-            color: #6b7280;
-            font-weight: 600;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        
-        .rebalance-table td {
-            padding: 12px 8px;
-            font-size: 13px;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        
-        .action-buy {
-            color: #ef4444;
-            font-weight: 600;
-        }
-        
-        .action-sell {
-            color: #10b981;
-            font-weight: 600;
-        }
-        
-        /* 弹层样式 */
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        
-        .overlay.active {
-            display: flex;
-            animation: fadeIn 0.3s;
-        }
-        
-        .popup {
-            background: white;
-            border-radius: 24px;
-            padding: 24px;
-            width: 100%;
-            max-width: 320px;
-            animation: slideUp 0.3s;
-        }
-        
-        .popup-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .popup-title {
-            font-size: 20px;
-            font-weight: 700;
-        }
-        
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            color: #6b7280;
-            cursor: pointer;
-        }
-        
-        .popup-content {
-            margin-bottom: 20px;
-        }
-        
-        .popup-footer {
-            display: flex;
-            gap: 12px;
-        }
-        
-        .btn {
-            flex: 1;
-            padding: 16px;
-            border-radius: 12px;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #1e3a8a, #065f46);
-            color: white;
-        }
-        
-        .btn-secondary {
-            background: #f3f4f6;
-            color: #374151;
-        }
-        
-        .btn:active {
-            transform: scale(0.98);
-        }
-        
-        /* 客服浮窗样式 */
-        .service-overlay {
-            align-items: flex-end;
-        }
-        
-        .service-popup {
-            max-width: 480px;
-            border-radius: 24px 24px 0 0;
-            animation: slideUpFromBottom 0.3s;
-        }
-        
-        .service-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .service-option {
-            padding: 20px;
-            background: #f8fafc;
-            border-radius: 16px;
-            border: none;
-            font-size: 16px;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .service-option:active {
-            background: #e5e7eb;
-        }
-        
-        /* 风险弹层特殊样式 */
-        .risk-content {
-            text-align: center;
-        }
-        
-        .rating-stars {
-            font-size: 32px;
-            color: #fbbf24;
-            margin: 12px 0;
-        }
-        
-        .comparison {
-            background: #f8fafc;
-            padding: 16px;
-            border-radius: 12px;
-            margin-top: 16px;
-        }
-        
-        /* 动画 */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes slideUpFromBottom {
-            from {
-                transform: translateY(100%);
-            }
-            to {
-                transform: translateY(0);
-            }
-        }
-        
-        /* 热区提示 */
-        .hotspot-hint {
-            position: absolute;
-            background: rgba(239, 68, 68, 0.1);
-            border: 2px dashed #ef4444;
-            border-radius: 8px;
-            pointer-events: none;
-            z-index: 10;
-            animation: pulse 2s infinite;
-        }
-        
-        .hotspot-label {
-            position: absolute;
-            background: #ef4444;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
-        }
-        
-        /* 工具提示 */
-        .chart-tooltip {
-            position: absolute;
-            background: white;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            z-index: 100;
-            display: none;
-            min-width: 200px;
-        }
-        
-        .tooltip-content {
-            font-size: 14px;
-        }
-        
-        .tooltip-btn {
-            margin-top: 12px;
-            padding: 8px 16px;
-            background: linear-gradient(135deg, #1e3a8a, #065f46);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            width: 100%;
-        }
-    </style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>私募基金投后陪伴看板 - 私享尊荣</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/echarts.min.js"></script>
+<style>
+    @font-face { font-family: 'PingFang SC'; src: local('PingFang SC'); }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", sans-serif; background-color: #f3f4f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .phone-container { width: 390px; height: 812px; background-color: #F5F7FA; border-radius: 40px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative; overflow: hidden; border: 8px solid #1a1a1a; }
+    .status-bar { height: 44px; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; color: white; position: absolute; top: 0; width: 100%; z-index: 50; }
+    .page-content { transition: opacity 0.3s ease-in-out; height: calc(812px - 84px); overflow-y: auto; scrollbar-width: none; padding-bottom: 20px; }
+    .page-content::-webkit-scrollbar { display: none; }
+    .hidden { display: none; opacity: 0; }
+    .active { display: block; opacity: 1; }
+    .bg-gradient-finance { background: linear-gradient(180deg, #1A3A5C 0%, #2A5C8C 100%); }
+    .tab-bar { height: 84px; background: white; border-top: 1px solid #e5e7eb; position: absolute; bottom: 0; width: 100%; display: flex; justify-content: space-around; align-items: center; padding-bottom: 20px; z-index: 50; }
+    .tab-item { display: flex; flex-direction: column; align-items: center; color: #6B7280; font-size: 11px; cursor: pointer; transition: color 0.2s; }
+    .tab-item.active { color: #1A3A5C; }
+    .tab-icon { font-size: 24px; margin-bottom: 4px; }
+    .text-gold { color: #C9A96E; }
+    .finance-card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); margin: 12px 16px; padding: 16px; }
+    .income-green { color: #34C759; }
+    .loss-red { color: #FF3B30; }
+    
+    /* 新增：数据卡片点击效果 */
+    .clickable-card { 
+        cursor: pointer; 
+        transition: all 0.2s ease; 
+        position: relative;
+    }
+    .clickable-card:active { 
+        transform: scale(0.98); 
+        background-color: #f9fafb;
+    }
+    .clickable-card::after {
+        content: "🔍";
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-size: 12px;
+        opacity: 0.5;
+    }
+    
+    /* 新增：弹层样式 */
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+    .overlay.active { display: flex; animation: fadeIn 0.3s; }
+    .popup {
+        background: white;
+        border-radius: 24px;
+        padding: 24px;
+        width: 100%;
+        max-width: 320px;
+        animation: slideUp 0.3s;
+    }
+    .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .popup-title { font-size: 20px; font-weight: 700; }
+    .close-btn { background: none; border: none; font-size: 20px; color: #6b7280; cursor: pointer; }
+    .popup-content { margin-bottom: 20px; }
+    .btn { flex: 1; padding: 16px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: linear-gradient(135deg, #1A3A5C, #2A5C8C); color: white; }
+    .btn:active { transform: scale(0.98); }
+    
+    /* 新增：客服浮窗 */
+    .service-overlay { align-items: flex-end; }
+    .service-popup { 
+        max-width: 480px; 
+        border-radius: 24px 24px 0 0; 
+        animation: slideUpFromBottom 0.3s;
+    }
+    .service-options { display: flex; flex-direction: column; gap: 12px; }
+    .service-option {
+        padding: 20px;
+        background: #f8fafc;
+        border-radius: 16px;
+        border: none;
+        font-size: 16px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .service-option:active { background: #e5e7eb; }
+    
+    /* 新增：悬浮按钮 */
+    .floating-btn {
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #1A3A5C, #2A5C8C);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        box-shadow: 0 4px 20px rgba(26, 58, 92, 0.3);
+        cursor: pointer;
+        z-index: 100;
+        border: none;
+        user-select: none;
+    }
+    .floating-btn:active { transform: scale(0.95); }
+    
+    /* 新增：工具提示 */
+    .chart-tooltip {
+        position: absolute;
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 100;
+        display: none;
+        min-width: 180px;
+    }
+    .tooltip-content { font-size: 14px; }
+    .tooltip-btn {
+        margin-top: 12px;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #1A3A5C, #2A5C8C);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        width: 100%;
+    }
+    
+    /* 新增：调仓标记 */
+    .rebalance-marker {
+        position: absolute;
+        cursor: pointer;
+        z-index: 10;
+    }
+    
+    /* 新增：热区提示 */
+    .hotspot-hint {
+        position: absolute;
+        background: rgba(255, 59, 48, 0.1);
+        border: 2px dashed #FF3B30;
+        border-radius: 8px;
+        pointer-events: none;
+        z-index: 10;
+        animation: pulse 2s infinite;
+    }
+    .hotspot-label {
+        position: absolute;
+        background: #FF3B30;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUpFromBottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+</style>
 </head>
 <body>
-    <div class="container">
-        <!-- 页面A：账户总览页 -->
-        <div id="pageA" class="page active">
-            <div class="user-info">
-                <div class="greeting">尊敬的客户，您好！</div>
-                <div class="total-assets">¥12,345,678</div>
-                <div class="fund-info">XX定制组合 · 风险评级：中低</div>
-            </div>
-            
-            <div class="monthly-return">
-                <div class="return-label">本月收益</div>
-                <div class="return-value positive">+2.3%</div>
-            </div>
-            
-            <div class="card chart-container">
-                <div id="mainChart"></div>
-            </div>
-            
-            <!-- 热区提示：调仓标记 -->
-            <div class="hotspot-hint" id="rebalanceHotspot" style="width: 40px; height: 40px; top: 380px; left: 180px;">
-                <div class="hotspot-label" style="top: -30px; left: 0;">点击调仓标记</div>
-            </div>
-            
-            <div class="data-cards">
-                <div class="data-card clickable" onclick="showPopup('cumulativePopup')">
-                    <div class="card-value positive">+15.8%</div>
-                    <div class="card-label">累计收益</div>
-                </div>
-                <div class="data-card clickable" onclick="showPopup('outperformPopup')">
-                    <div class="card-value positive">+3.2%</div>
-                    <div class="card-label">跑赢大盘</div>
-                </div>
-                <div class="data-card clickable" onclick="showPopup('riskPopup')">
-                    <div class="card-value">82分</div>
-                    <div class="card-label">风险体检</div>
-                </div>
-            </div>
-            
-            <!-- 热区提示：数据卡片 -->
-            <div class="hotspot-hint" style="width: 100px; height: 60px; top: 550px; left: 40px;">
-                <div class="hotspot-label" style="top: -30px; left: 20px;">点击查看详情</div>
-            </div>
-            
-            <!-- 调仓工具提示 -->
-            <div class="chart-tooltip" id="rebalanceTooltip">
-                <div class="tooltip-content">
-                    <div style="font-weight: 600; margin-bottom: 8px;">[4月15日] 调仓</div>
-                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">减持消费板块，加仓AI算力</div>
-                    <button class="tooltip-btn" onclick="goToDetail()">查看详情 ></button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 页面B：操作复盘详情页 -->
-        <div id="pageB" class="page">
-            <button class="back-btn" onclick="goBack()">
-                <iconify-icon icon="mdi:arrow-left"></iconify-icon>
-                返回
-            </button>
-            
-            <div class="card">
-                <h2 class="page-title">[4月]操作复盘报告</h2>
-                
-                <div class="strategy-compare">
-                    <div class="strategy-column highlights">
-                        <div class="column-title">
-                            <iconify-icon icon="mdi:check-circle" style="color: #059669;"></iconify-icon>
-                            本次操作亮点
-                        </div>
-                        <ul class="strategy-list">
-                            <li class="strategy-item">精准减持消费板块5%，成功规避后续回调</li>
-                            <li class="strategy-item">及时加仓AI算力龙头，单月贡献+2.1%收益</li>
-                            <li class="strategy-item">优化债券久期，提升组合防御性</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="strategy-column reflections">
-                        <div class="column-title">
-                            <iconify-icon icon="mdi:lightbulb" style="color: #d97706;"></iconify-icon>
-                            反思与优化
-                        </div>
-                        <ul class="strategy-list">
-                            <li class="strategy-item">对新能源车板块调整幅度预判不足</li>
-                            <li class="strategy-item">港股配置比例可进一步优化</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 24px;">
-                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">调仓明细</div>
-                    <table class="rebalance-table">
-                        <thead>
-                            <tr>
-                                <th>日期</th>
-                                <th>标的</th>
-                                <th>操作</th>
-                                <th>比例</th>
-                                <th>原因</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>04-15</td>
-                                <td>消费龙头A</td>
-                                <td class="action-sell">减持</td>
-                                <td>-5%</td>
-                                <td>估值偏高</td>
-                            </tr>
-                            <tr>
-                                <td>04-15</td>
-                                <td>AI芯片B</td>
-                                <td class="action-buy">增持</td>
-                                <td>+5%</td>
-                                <td>景气上行</td>
-                            </tr>
-                            <tr>
-                                <td>04-20</td>
-                                <td>国债ETF</td>
-                                <td class="action-buy">增持</td>
-                                <td>+3%</td>
-                                <td>防御配置</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 悬浮按钮 -->
-        <button class="floating-btn" onclick="showServicePopup()">
-            我的顾问
-        </button>
-    </div>
-    
-    <!-- 累计收益弹层 -->
-    <div class="overlay" id="cumulativePopup">
-        <div class="popup">
-            <div class="popup-header">
-                <div class="popup-title">📈 累计收益 +15.8%</div>
-                <button class="close-btn" onclick="closePopup('cumulativePopup')">×</button>
-            </div>
-            <div class="popup-content">
-                <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
-                    <div style="margin-bottom: 12px;">
-                        <div style="font-size: 12px; color: #6b7280;">收益构成分析</div>
-                        <div style="font-size: 14px; margin-top: 4px;">💰 <b>本金增长</b>：+12.1% （来自资产价格上涨）</div>
-                        <div style="font-size: 14px; margin-top: 8px;">🎯 <b>分红再投资</b>：+3.7% （红利自动滚入，享受复利）</div>
-                    </div>
-                    <div style="margin-top: 16px;">
-                        <div style="font-size: 12px; color: #6b7280;">时间复利</div>
-                        <div style="font-size: 14px; color: #059669; font-weight: 600; margin-top: 4px;">持有超过18个月，远超同期定期存款收益</div>
-                    </div>
-                </div>
-                <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px;">
-                    <div style="font-size: 12px; color: #92400e; font-style: italic;">"长期持有是熨平波动、获取复利的关键。"</div>
-                </div>
-            </div>
-            <div class="popup-footer">
-                <button class="btn btn-primary" onclick="closePopup('cumulativePopup')">明白了</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 跑赢大盘弹层 -->
-    <div class="overlay" id="outperformPopup">
-        <div class="popup">
-            <div class="popup-header">
-                <div class="popup-title">🏆 跑赢大盘 +3.2%</div>
-                <button class="close-btn" onclick="closePopup('outperformPopup')">×</button>
-            </div>
-            <div class="popup-content">
-                <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
-                    <div style="margin-bottom: 12px;">
-                        <div style="font-size: 12px; color: #6b7280;">基准对比</div>
-                        <div style="font-size: 14px; margin-top: 4px; font-weight: 600;">沪深300全收益指数</div>
-                    </div>
-                    <div style="margin-top: 16px;">
-                        <div style="font-size: 12px; color: #6b7280;">主要贡献来源</div>
-                        <div style="font-size: 14px; margin-top: 8px;">✅ <b>科技股超配</b>：组合在AI算力板块配置超越指数权重</div>
-                        <div style="font-size: 14px; margin-top: 8px;">✅ <b>主动调仓</b>：4月减持消费、加仓科技，捕捉结构性行情</div>
-                    </div>
-                </div>
-                <div style="margin-top: 16px; padding: 12px; background: #d1fae5; border-radius: 8px;">
-                    <div style="font-size: 12px; color: #065f46; font-style: italic;">"超额收益体现了我们主动管理能力的价值。"</div>
-                </div>
-            </div>
-            <div class="popup-footer">
-                <button class="btn btn-primary" onclick="closePopup('outperformPopup')">好的</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 风险体检弹层 -->
-    <div class="overlay" id="riskPopup">
-        <div class="popup">
-            <div class="popup-header">
-                <div class="popup-title">🛡️ 风险健康体检</div>
-                <button class="close-btn" onclick="closePopup('riskPopup')">×</button>
-            </div>
-            <div class="popup-content risk-content">
-                <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">收益稳定性评级</div>
-                <div class="rating-stars">⭐⭐⭐⭐⭐</div>
-                <div style="font-size: 16px; font-weight: 600; color: #059669; margin-bottom: 24px;">非常稳定</div>
-                
-                <div class="comparison">
-                    <div style="font-size: 12px; color: #6b7280;">与同类产品对比</div>
-                    <div style="font-size: 20px; font-weight: 700; color: #1e3a8a; margin: 8px 0;">优于 85%</div>
-                    <div style="font-size: 14px; color: #374151;">的最大回撤控制优于同类基金</div>
-                </div>
-            </div>
-            <div class="popup-footer">
-                <button class="btn btn-primary" onclick="closePopup('riskPopup')">知道了</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 客服浮窗 -->
-    <div class="overlay service-overlay" id="servicePopup">
-        <div class="popup service-popup">
-            <div class="popup-header">
-                <div class="popup-title">需要什么帮助？</div>
-                <button class="close-btn" onclick="closePopup('servicePopup')">×</button>
-            </div>
-            <div class="popup-content">
-                <div class="service-options">
-                    <button class="service-option" onclick="selectService('调仓逻辑')">了解本次调仓逻辑</button>
-                    <button class="service-option" onclick="selectService('投资目标')">调整我的投资目标</button>
-                    <button class="service-option" onclick="selectService('其他咨询')">其他问题咨询</button>
-                </div>
-            </div>
-            <div class="popup-footer">
-                <button class="btn btn-secondary" onclick="closePopup('servicePopup')">关闭</button>
-            </div>
-        </div>
-    </div>
+<div class="phone-container">
+<!-- 状态栏 -->
+<div class="status-bar" id="statusBar">
+<span id="currentTime">09:41</span>
+<div class="flex space-x-1 items-center">
+<iconify-icon icon="fluent:cellular-data-24-filled"></iconify-icon>
+<iconify-icon icon="fluent:wifi-1-24-filled"></iconify-icon>
+<iconify-icon icon="fluent:battery-1-24-filled"></iconify-icon>
+</div>
+</div>
 
-    <script>
-        // 初始化ECharts图表
-        let myChart;
-        function initChart() {
-            myChart = echarts.init(document.getElementById('mainChart'));
-            
-            const option = {
-                backgroundColor: 'transparent',
-                grid: {
-                    left: '5%',
-                    right: '5%',
-                    top: '15%',
-                    bottom: '15%'
-                },
-                xAxis: {
-                    type: 'category',
-                    data: ['1月', '2月', '3月', '4月', '5月', '6月'],
-                    axisLine: { show: false },
-                    axisTick: { show: false },
-                    axisLabel: {
-                        color: '#6b7280',
-                        fontSize: 12
-                    }
-                },
-                yAxis: {
-                    type: 'value',
-                    axisLine: { show: false },
-                    axisTick: { show: false },
-                    splitLine: {
-                        lineStyle: {
-                            color: '#e5e7eb',
-                            type: 'dashed'
-                        }
-                    },
-                    axisLabel: {
-                        color: '#6b7280',
-                        fontSize: 12,
-                        formatter: '{value}%'
-                    }
-                },
-                series: [
-                    {
-                        name: '收益率',
-                        type: 'line',
-                        smooth: true,
-                        data: [2.1, 3.5, 5.2, 2.3, 4.8, 6.1],
-                        lineStyle: {
-                            width: 4,
-                            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                                { offset: 0, color: '#1e3a8a' },
-                                { offset: 1, color: '#065f46' }
-                            ])
-                        },
-                        symbolSize: 0,
-                        areaStyle: {
-                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: 'rgba(30, 58, 138, 0.3)' },
-                                { offset: 1, color: 'rgba(6, 95, 70, 0.1)' }
-                            ])
-                        }
-                    },
-                    {
-                        name: '调仓点',
-                        type: 'scatter',
-                        data: [
-                            { value: '3月', symbolSize: 20, itemStyle: { color: '#ef4444' } },
-                            { value: '4月', symbolSize: 20, itemStyle: { color: '#ef4444' } }
-                        ],
-                        symbol: 'circle',
-                        symbolSize: 20
-                    }
-                ],
-                graphic: [
-                    {
-                        type: 'text',
-                        style: {
-                            text: '🚩',
-                            fontSize: 20
-                        },
-                        left: '33%',
-                        top: '30%',
-                        onclick: function() {
-                            showTooltip(100, 100, '3月');
-                        }
-                    },
-                    {
-                        type: 'text',
-                        style: {
-                            text: '🚩',
-                            fontSize: 20
-                        },
-                        left: '50%',
-                        top: '50%',
-                        onclick: function() {
-                            showTooltip(200, 150, '4月');
-                        }
-                    }
-                ]
-            };
-            
-            myChart.setOption(option);
-            
-            // 调整图表大小
-            window.addEventListener('resize', function() {
-                myChart.resize();
-            });
-        }
-        
-        // 显示工具提示
-        function showTooltip(x, y, month) {
-            const tooltip = document.getElementById('rebalanceTooltip');
-            tooltip.style.display = 'block';
-            tooltip.style.left = (x - 100) + 'px';
-            tooltip.style.top = (y - 80) + 'px';
-            
-            // 5秒后自动隐藏
-            setTimeout(() => {
-                tooltip.style.display = 'none';
-            }, 5000);
-        }
-        
-        // 跳转到详情页
-        function goToDetail() {
-            document.getElementById('rebalanceTooltip').style.display = 'none';
-            switchPage('pageB');
-        }
-        
-        // 页面切换
-        function switchPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-            document.getElementById(pageId).classList.add('active');
-        }
-        
-        // 返回上一页
-        function goBack() {
-            switchPage('pageA');
-        }
-        
-        // 显示弹层
-        function showPopup(popupId) {
-            document.getElementById(popupId).classList.add('active');
-        }
-        
-        // 关闭弹层
-        function closePopup(popupId) {
-            document.getElementById(popupId).classList.remove('active');
-        }
-        
-        // 显示客服浮窗
-        function showServicePopup() {
-            showPopup('servicePopup');
-        }
-        
-        // 选择客服选项
-        function selectService(option) {
-            alert('已选择: ' + option + '\n顾问将尽快联系您！');
-            closePopup('servicePopup');
-        }
-        
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            initChart();
-            
-            // 隐藏热区提示
-            setTimeout(() => {
-                document.getElementById('rebalanceHotspot').style.display = 'none';
-            }, 5000);
-        });
-        
-        // 点击页面其他地方隐藏工具提示
-        document.addEventListener('click', function(e) {
-            const tooltip = document.getElementById('rebalanceTooltip');
-            if (!e.target.closest('.chart-tooltip') && !e.target.closest('[onclick*="showTooltip"]')) {
-                tooltip.style.display = 'none';
-            }
-        });
-    </script>
-</body>
-</html>
+<!-- 页面1：首页概览 -->
+<div class="page-content active" id="page-home">
+<!-- 头部概览 -->
+<div class="bg-gradient-finance pt-12 pb-8 px-6 text-white rounded-b-[32px]">
+<div class="flex justify-between items-end mb-6">
+<div>
+<p class="text-sm opacity-80">尊敬的张先生</p>
+<h1 class="text-2xl font-bold mt-1">下午好，欢迎回来</h1>
+</div>
+<p class="text-xs opacity-60">报告日期：2025年6月23日</p>
+</div>
+<div class="mb-4">
+<p class="text-xs opacity-70 mb-1">总资产 (元)</p>
+<div class="flex items-baseline">
+<span class="text-4xl font-bold">¥12,580,000</span>
+</div>
+<p class="text-sm mt-2 income-green font-medium">较上月 +¥36,800 (+0.29%)</p>
+</div>
+</div>
+
+<!-- 核心数据卡片（横向滚动）- 修改为可点击 -->
+<div class="flex overflow-x-auto space-x-3 px-4 -mt-6 no-scrollbar" style="scrollbar-width: none;">
+<!-- 累计收益卡片 -->
+<div class="flex-shrink-0 w-32 bg-blue-50 p-4 rounded-2xl border border-blue-100 shadow-sm clickable-card" onclick="showPopup('cumulativePopup')">
+<p class="text-xs text-gray-500 mb-1">累计总收益</p>
+<p class="text-lg font-bold text-[#1A3A5C]">¥1.85M</p>
+<div class="mt-2 h-1 w-full bg-blue-200 rounded-full overflow-hidden">
+<div class="h-full bg-blue-500" style="width: 80%"></div>
+</div>
+</div>
+
+<!-- 跑赢大盘卡片 -->
+<div class="flex-shrink-0 w-32 bg-yellow-50 p-4 rounded-2xl border border-yellow-100 shadow-sm clickable-card" onclick="showPopup('outperformPopup')">
+<p class="text-xs text-gray-500 mb-1">超额收益</p>
+<p class="text-lg font-bold text-gold">+3.2%</p>
+<div class="mt-2 h-1 w-full bg-yellow-200 rounded-full overflow-hidden">
+<div class="h-full bg-yellow-500" style="width: 45%"></div>
+</div>
+</div>
+
+<!-- 风险体检卡片 -->
+<div class="flex-shrink-0 w-32 bg-green-50 p-4 rounded-2xl border border-green-100 shadow-sm clickable-card" onclick="showPopup('riskPopup')">
+<p class="text-xs text-gray-500 mb-1">风险评分</p>
+<p class="text-lg font-bold income-green">82分</p>
+<div class="mt-2 h-1 w-full bg-green-200 rounded-full overflow-hidden">
+<div class="h-full bg-green-500" style="width: 65%"></div>
+</div>
+</div>
+</div>
+
+<!-- 图表：近6个月收益趋势 - 增加调仓标记 -->
+<div class="finance-card mt-6 relative">
+<h3 c
