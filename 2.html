@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>[2025年04月02日] 操作复盘报告</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/echarts.min.js"></script>
+<style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        #waterfall-container { width: 100%; height: 320px; }
+    </style>
+</head>
+<body class="bg-gray-50 flex justify-center">
+<!-- 移动端容器 -->
+<div class="w-[375px] h-[812px] bg-white shadow-2xl relative overflow-hidden flex flex-col">
+<!-- 头部 -->
+<div class="flex-none px-4 py-4 flex items-center border-b bg-white">
+<button class="p-2 -ml-2 text-gray-600 active:bg-gray-100 rounded-full" onclick="location.href='index.html'">
+<iconify-icon class="text-2xl" icon="mdi:arrow-left"></iconify-icon>
+</button>
+<h1 class="flex-1 text-center font-bold text-gray-800 pr-8">[2025年04月02日] 操作复盘报告</h1>
+</div>
+<!-- 主内容区 -->
+<div class="flex-1 overflow-y-auto no-scrollbar p-5 pb-24">
+<!-- 策略得失模块 -->
+<div class="grid grid-cols-2 gap-3 mb-8">
+<!-- 亮点 -->
+<div class="bg-white border border-blue-100 rounded-xl p-4 shadow-sm">
+<div class="flex items-center gap-2 mb-3">
+<span class="text-green-500 text-lg">✅</span>
+<span class="font-bold text-gray-800 text-sm">操作亮点</span>
+</div>
+<ul class="space-y-3 text-[11px] text-gray-600 leading-relaxed">
+<li>• 及时减持新能源，规避板块估值回调风险</li>
+<li>• 增持红利低波+3%，年初布局春季行情</li>
+<li>• 增持科技龙头+5%，捕捉AI产业催化机会</li>
+</ul>
+</div>
+<!-- 反思 -->
+<div class="bg-gray-50 border border-gray-100 rounded-xl p-4 shadow-sm">
+<div class="flex items-center gap-2 mb-3">
+<span class="text-orange-500 text-lg">📝</span>
+<span class="font-bold text-gray-800 text-sm">反思与优化</span>
+</div>
+<ul class="space-y-3 text-[11px] text-gray-600 leading-relaxed">
+<li>• 新能源减持时间点仍有优化空间</li>
+<li>• 债券增强配置比例可进一步提升</li>
+</ul>
+</div>
+</div>
+<!-- 调仓瀑布图 -->
+<div class="mb-8">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-bold text-gray-800 flex items-center gap-2">
+<iconify-icon class="text-blue-500" icon="mdi:chart-bar"></iconify-icon>
+                        累计超额收益贡献
+                    </h3>
+<span class="text-[10px] text-gray-400">单位: %</span>
+</div>
+<div class="bg-white rounded-xl border border-gray-100 p-2">
+<div id="waterfall-container"></div>
+</div>
+<p class="mt-3 text-[11px] text-gray-400 leading-relaxed px-1">
+                    * 红色柱代表上涨贡献，绿色柱代表下跌拖累，灰色柱代表当日调仓操作。
+                </p>
+</div>
+<!-- 详细复盘文案 -->
+<div class="bg-blue-50/50 rounded-xl p-5 border border-blue-100 mb-8">
+<h4 class="font-bold text-blue-900 mb-3 text-sm">本月深度总结</h4>
+<p class="text-sm text-blue-800/80 leading-relaxed">
+                    4月初我们基于板块估值过高的判断，减持了新能源仓位（-2%）。前期布局的红利低波和科技龙头为组合积累了可观收益。减持新能源释放的资金后续配置到港股通等估值洼地品种。整体来看，本季度组合通过主动风险管理维持了稳健表现。
+                </p>
+</div>
+</div>
+<!-- 底部固定按钮 -->
+<div class="flex-none p-5 bg-white border-t">
+<button class="w-full py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all" onclick="location.href='index.html'">
+                返回账户总览
+            </button>
+</div>
+</div>
+<script>
+        window.onload = function() {
+            initWaterfallChart();
+        };
+
+        function initWaterfallChart() {
+            const chart = echarts.init(document.getElementById('waterfall-container'));
+
+            const categories = ['初始', '01-15\n红利低波', '02-20\n科技龙头', '03-08\n债券增强', '04-02\n新能源', '04-18\n港股通', '2026-06\n当前'];
+            
+            const help = [0, 0, 3, 8, 12, 12, 0];
+            const positive = ['-', 3, 5, 4, '-', 3, '-'];
+            const negative = ['-', '-', '-', '-', '-', '-', '-'];
+            const recordDay = ['-', '-', '-', '-', 2, '-', '-'];
+            const total = [0, '-', '-', '-', '-', '-', 15];
+
+            const option = {
+                grid: { top: 30, left: 30, right: 15, bottom: 40 },
+                xAxis: {
+                    type: 'category',
+                    data: categories,
+                    axisLabel: { fontSize: 9, color: '#999', interval: 0 },
+                    axisLine: { lineStyle: { color: '#eee' } }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: { fontSize: 9, color: '#999', formatter: '{value}%' },
+                    splitLine: { lineStyle: { type: 'dashed', color: '#f5f5f5' } }
+                },
+                series: [
+                    { name: '辅助', type: 'bar', stack: 'all', itemStyle: { borderColor: 'transparent', color: 'transparent' }, emphasis: { itemStyle: { borderColor: 'transparent', color: 'transparent' } }, data: help },
+                    { name: '上涨', type: 'bar', stack: 'all', itemStyle: { color: '#EF4444', borderRadius: 2 }, label: { show: true, position: 'top', fontSize: 9, formatter: '+{c}%' }, data: positive },
+                    { name: '下跌', type: 'bar', stack: 'all', itemStyle: { color: '#10B981', borderRadius: 2 }, label: { show: true, position: 'bottom', fontSize: 9, formatter: '-{c}%' }, data: negative },
+                    { name: '当日调仓', type: 'bar', stack: 'all', itemStyle: { color: '#94A3B8', borderRadius: 2 }, label: { show: true, position: 'bottom', fontSize: 9, formatter: '-{c}%' }, data: recordDay },
+                    { name: '累计', type: 'bar', stack: 'all', itemStyle: { color: '#1A73E8', borderRadius: 2 }, label: { show: true, position: 'top', fontSize: 10, fontWeight: 'bold', formatter: '{c}%' }, data: total }
+                ]
+            };
+            
+            chart.setOption(option);
+        }</script></body></html>

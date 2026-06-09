@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>账户总览 - 私募基金陪伴看板</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/echarts.min.js"></script>
+<style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .active-tab { color: #1A73E8; }
+        #chart-container { width: 100%; height: 280px; }
+        #pie-container { width: 100%; height: 200px; }
+    </style>
+</head>
+<body class="bg-gray-50 flex justify-center">
+<!-- 移动端容器 -->
+<div class="w-[375px] h-[812px] bg-white shadow-2xl relative overflow-hidden flex flex-col">
+<!-- 状态栏 -->
+<div class="flex-none px-6 py-3 flex justify-between items-center bg-white z-10">
+<span class="text-sm font-bold">09:41</span>
+<div class="flex gap-1.5 items-center text-lg">
+<iconify-icon icon="mdi:signal-cellular-3"></iconify-icon>
+<iconify-icon icon="mdi:wifi"></iconify-icon>
+<iconify-icon icon="mdi:battery"></iconify-icon>
+</div>
+</div>
+<!-- 主内容区 -->
+<div class="flex-1 overflow-y-auto no-scrollbar pb-24">
+<!-- 用户信息 -->
+<div class="px-5 pt-4 pb-6 bg-white">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+<iconify-icon class="text-2xl" icon="mdi:account"></iconify-icon>
+</div>
+<span class="text-gray-800 font-medium text-lg">尊敬的张先生，您好！</span>
+</div>
+<div class="mb-1 text-gray-500 text-sm">总资产 (元)</div>
+<div class="text-3xl font-bold text-gray-900 tracking-tight">¥12,345,678</div>
+</div>
+<!-- 基金名称卡片 -->
+<div class="px-5 mb-4">
+<div class="bg-blue-50 rounded-xl p-4 cursor-pointer transition-all active:scale-95 border border-blue-100" id="fund-card">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="font-bold text-blue-900 leading-tight">【聚丰稳健增长组合】</span>
+<span class="text-xs px-2 py-0.5 bg-blue-200 text-blue-700 rounded-full">风险：中低</span>
+</div>
+<iconify-icon class="text-blue-600 transition-transform" icon="mdi:chevron-down" id="fund-arrow"></iconify-icon>
+</div>
+<!-- 资产大类饼图 (默认隐藏) -->
+<div class="hidden mt-4 pt-4 border-t border-blue-200" id="pie-card">
+<div id="pie-container"></div>
+</div>
+</div>
+</div>
+<!-- 本月收益 -->
+<div class="px-5 mb-6 flex items-end gap-3">
+<div>
+<div class="text-sm text-gray-500 mb-1">本月收益</div>
+<div class="text-2xl font-bold text-red-500">+2.3%</div>
+</div>
+<div class="text-xs text-red-400 pb-1">较上月 +0.8%</div>
+</div>
+<!-- 收益趋势图表 -->
+<div class="px-5 mb-6">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-bold text-gray-800">收益趋势对比</h3>
+<div class="flex items-center gap-2">
+<button class="text-xs text-white bg-blue-600 px-2.5 py-1 rounded-lg font-medium" id="chart-mode-btn" onclick="toggleChartMode()">查看累计</button>
+<div class="flex gap-2">
+<button class="p-1 rounded-full bg-gray-100 text-gray-600 active:bg-gray-200" onclick="scrollChart('left')">
+<iconify-icon icon="mdi:chevron-left"></iconify-icon>
+</button>
+<button class="p-1 rounded-full bg-gray-100 text-gray-600 active:bg-gray-200" onclick="scrollChart('right')">
+<iconify-icon icon="mdi:chevron-right"></iconify-icon>
+</button>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+<div id="chart-container"></div>
+<div class="flex justify-center gap-4 mt-2 text-[10px] text-gray-400">
+<span class="flex items-center gap-1"><i class="w-2 h-0.5 bg-blue-500"></i> 基金收益率</span>
+<span class="flex items-center gap-1 cursor-pointer" onclick="toggleBenchmarkLine()"><i class="w-2 h-0.5 border-t border-dashed border-gray-400"></i> 沪深300收益率</span>
+</div>
+</div>
+</div>
+<!-- 三个关键指标卡片 -->
+<div class="px-5 mb-6">
+<div class="grid grid-cols-3 gap-3">
+<div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-center cursor-pointer active:bg-gray-50" onclick="toggleDetail('profit')">
+<div class="text-[10px] text-gray-500 mb-1">累计收益</div>
+<div class="text-sm font-bold text-red-500">+15.8%</div>
+</div>
+<div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-center cursor-pointer active:bg-gray-50" id="benchmark-btn" onclick="toggleDetail('beat')">
+<div class="text-[10px] text-gray-500 mb-1">跑赢大盘</div>
+<div class="text-sm font-bold text-blue-600">+3.2%</div></div>
+<div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-center cursor-pointer active:bg-gray-50" onclick="toggleDetail('health')">
+<div class="text-[10px] text-gray-500 mb-1">风险体检</div>
+<div class="text-sm font-bold text-green-600">82分</div>
+</div>
+</div>
+<!-- 跑赢大盘详情弹层（内联卡片） -->
+<div class="hidden mt-3 bg-white rounded-xl border border-blue-100 p-4 shadow-lg" id="beat-detail">
+<h4 class="font-bold text-gray-800 mb-3 flex items-center gap-2">📊 跑赢大盘分析</h4>
+<div class="space-y-3 mb-4">
+<div class="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
+<span class="text-sm text-gray-600">基金本月收益</span>
+<span class="text-lg font-bold text-blue-600">+2.3%</span>
+</div>
+<div class="flex justify-between items-center p-3 bg-red-50 rounded-xl">
+<span class="text-sm text-gray-600">沪深300指数</span>
+<span class="text-lg font-bold text-red-500">-0.9%</span>
+</div>
+<div class="mt-4 pt-4 border-t border-gray-100">
+<div class="text-center">
+<span class="text-xs text-gray-500">跑赢大盘 = 2.3% - (-0.9%)</span>
+<div class="text-2xl font-bold text-green-600 mt-1">+3.2%</div>
+</div>
+</div>
+<div class="p-3 bg-green-50 rounded-xl mt-3">
+<p class="text-xs text-green-700 leading-relaxed">跑赢市场，不仅靠进攻，更源于下跌时的有效防守。</p>
+</div>
+</div>
+<button class="w-full mt-3 py-2 text-sm text-gray-500 border-t" onclick="toggleDetail('beat')">返回</button>
+</div>
+<!-- 累计收益详情弹层 -->
+<div class="hidden mt-3 bg-white rounded-xl border border-blue-100 p-4 shadow-lg" id="profit-detail">
+<h4 class="font-bold text-gray-800 mb-3 flex items-center gap-2">📈 累计收益 +15.8%</h4>
+<div class="mb-4">
+<div class="flex justify-between text-xs text-gray-500 mb-1">
+<span>建议持有期：5 年</span>
+<span>40% (已持有 2 年)</span>
+</div>
+<div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+<div class="w-[40%] h-full bg-blue-500"></div>
+</div>
+</div>
+<div class="space-y-2 text-sm text-gray-600">
+<p>💰 本金增长：+12.1% (资产价格上涨)</p>
+<p>🎯 分红再投资：+3.7% (复利效应)</p>
+</div>
+<div class="mt-3 p-2 bg-blue-50 rounded text-xs text-blue-700 leading-relaxed">
+                        "超额收益体现了我们主动管理能力的价值。长期持有是熨平波动、获取复利的关键。"
+                    </div>
+<button class="w-full mt-3 py-2 text-sm text-gray-500 border-t" onclick="toggleDetail('profit')">返回</button>
+</div>
+<!-- 风险体检详情弹层 -->
+<div class="hidden mt-3 bg-white rounded-xl border border-green-100 p-4 shadow-lg" id="health-detail">
+<h4 class="font-bold text-gray-800 mb-3 flex items-center gap-2">🏥 风险健康体检</h4>
+<div class="space-y-4">
+<div>
+<div class="text-xs text-gray-500 mb-1">收益稳定性评级</div>
+<div class="flex text-yellow-400">
+<iconify-icon icon="mdi:star"></iconify-icon>
+<iconify-icon icon="mdi:star"></iconify-icon>
+<iconify-icon icon="mdi:star"></iconify-icon>
+<iconify-icon icon="mdi:star"></iconify-icon>
+<iconify-icon class="text-gray-300" icon="mdi:star-outline"></iconify-icon>
+<span class="ml-2 text-gray-700 text-xs">(非常稳定)</span>
+</div>
+</div>
+<div class="flex justify-between items-center border-t pt-3">
+<span class="text-sm text-gray-600">与同类产品对比</span>
+<span class="text-sm font-bold text-green-600">优于 85%</span>
+</div>
+<div class="grid grid-cols-2 gap-4 text-xs">
+<div class="bg-gray-50 p-2 rounded">
+<div class="text-gray-400 mb-1">最大回撤</div>
+<div class="font-bold text-gray-700">-8.2%</div>
+</div>
+<div class="bg-gray-50 p-2 rounded">
+<div class="text-gray-400 mb-1">年化波动率</div>
+<div class="font-bold text-gray-700">12.4%</div>
+</div>
+</div>
+</div>
+<button class="w-full mt-4 py-2 text-sm text-gray-500 border-t" onclick="toggleDetail('health')">返回</button>
+</div>
+</div>
+<!-- 陪伴寄语 -->
+<div class="px-5 mb-6">
+<div class="bg-gray-100 rounded-xl p-4 flex gap-3">
+<iconify-icon class="text-blue-500 text-xl flex-none" icon="mdi:message-text-outline"></iconify-icon>
+<p class="text-sm text-gray-600 leading-relaxed">
+                        近期市场波动加大，我们已通过增加债券仓位提升了组合的防御性。请保持耐心，稳健的配置是穿越牛熊的关键。
+                    </p>
+</div>
+</div>
+<!-- 本月调仓明细 -->
+<div class="px-5 mb-10">
+<h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">📋 本月调仓明细</h3>
+<div class="overflow-hidden border border-gray-100 rounded-lg">
+<table class="w-full text-xs">
+<thead class="bg-gray-50 text-gray-500">
+<tr>
+<th class="px-3 py-2 font-medium">日期</th>
+<th class="px-3 py-2 font-medium">标的</th>
+<th class="px-3 py-2 font-medium">操作</th>
+<th class="px-3 py-2 font-medium">比例</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50">
+<tr class="active:bg-gray-50">
+<td class="px-3 py-3 text-blue-600 font-medium underline cursor-pointer" onclick="location.href='1.html'">2026-06-08</td>
+<td class="px-3 py-3">医药创新</td>
+<td class="px-3 py-3 text-green-600 font-bold">+增持</td>
+<td class="px-3 py-3 font-bold">+3%</td>
+</tr>
+<tr>
+<td class="px-3 py-2 text-[10px] text-gray-400 bg-gray-50" colspan="4">原因：创新药出海突破</td>
+</tr>
+<tr class="active:bg-gray-50">
+<td class="px-3 py-3 text-blue-600 font-medium underline cursor-pointer" onclick="location.href='1.html'">2026-06-20</td>
+<td class="px-3 py-3">黄金ETF</td>
+<td class="px-3 py-3 text-red-500 font-bold">-减持</td>
+<td class="px-3 py-3 font-bold">-2%</td>
+</tr>
+<tr>
+<td class="px-3 py-2 text-[10px] text-gray-400 bg-gray-50" colspan="4">原因：美元走强，降低配置</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="flex justify-end mt-2">
+<button class="text-xs text-blue-600 font-medium px-3 py-1 bg-blue-50 rounded-lg hover:bg-blue-100 transition" onclick="showAllAdjustments()">全部</button>
+</div>
+</div>
+</div>
+<!-- 底部导航 -->
+<div class="flex-none h-20 bg-white border-t flex items-center px-4 safe-bottom">
+<div class="flex-1 flex flex-col items-center active-tab">
+<iconify-icon class="text-2xl mb-1" icon="mdi:home"></iconify-icon>
+<span class="text-[10px]">首页</span>
+</div>
+<div class="flex-1 flex flex-col items-center text-gray-400" onclick="toggleAdvisorPanel()">
+<iconify-icon class="text-2xl mb-1" icon="mdi:account-tie-voice"></iconify-icon>
+<span class="text-[10px]">联系顾问</span>
+</div>
+<!-- iOS 横条 -->
+<div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-32 h-1 bg-gray-200 rounded-full"></div>
+</div>
+<!-- 联系顾问半屏面板 -->
+<div class="hidden absolute inset-0 bg-black/40 z-20 flex flex-col justify-end" id="advisor-panel">
+<div class="bg-white rounded-t-3xl p-6 transform transition-transform duration-300 translate-y-full" id="panel-content">
+<div class="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
+<!-- 经理背景 -->
+<div class="flex gap-4 mb-6">
+<img alt="Fund Manager" class="w-16 h-16 rounded-xl object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-06-09/69a7c6de1b424270938e68af605c0945.jpg"/>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-bold text-gray-800">张经理</span>
+<span class="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">从业12年</span>
+</div>
+<p class="text-[10px] text-gray-500 mt-1 leading-relaxed">
+                            管理规模超 ¥8亿 · 服务高净值客户<br/>
+                            风格：均衡成长 + 严控回撤
+                        </p>
+</div>
+</div>
+<div class="space-y-3 mb-8">
+<button class="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl active:bg-gray-100" onclick="toggleAdvisorPanel()">
+<div class="flex items-center gap-3">
+<iconify-icon class="text-blue-500 text-xl" icon="mdi:chart-box-outline"></iconify-icon>
+<span class="text-sm font-medium">📊 了解本次调仓逻辑</span>
+</div>
+<iconify-icon class="text-gray-400" icon="mdi:chevron-right"></iconify-icon>
+</button>
+<button class="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl active:bg-gray-100" onclick="toggleAdvisorPanel()">
+<div class="flex items-center gap-3">
+<iconify-icon class="text-blue-500 text-xl" icon="mdi:target"></iconify-icon>
+<span class="text-sm font-medium">🎯 调整我的投资目标</span>
+</div>
+<iconify-icon class="text-gray-400" icon="mdi:chevron-right"></iconify-icon>
+</button>
+<button class="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl active:bg-gray-100" onclick="toggleAdvisorPanel()">
+<div class="flex items-center gap-3">
+<iconify-icon class="text-blue-500 text-xl" icon="mdi:chat-processing-outline"></iconify-icon>
+<span class="text-sm font-medium">💬 其他问题咨询</span>
+</div>
+<iconify-icon class="text-gray-400" icon="mdi:chevron-right"></iconify-icon>
+</button>
+</div>
+<button class="w-full py-4 text-gray-500 font-medium border-t" onclick="toggleAdvisorPanel()">关闭</button>
+</div>
+</div>
+<script>
+        let myChart, pieChart;
+        let showBenchmark = false;
+        let isCumulativeMode = false;
+
+        // 日期范围：2025-01 ~ 2026-06（18个月）
+        const monthDates = ['2025-01','2025-02','2025-03','2025-04','2025-05','2025-06','2025-07','2025-08','2025-09','2025-10','2025-11','2025-12','2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
+
+        // 沪深300月度收益率（小数，2025-01 至 2026-06）
+        const indexDecimal = [
+            null,        // 2025-01（基准月）
+            0.0329,      // 2025-02
+            0.0168,      // 2025-03
+            -0.0239,     // 2025-04
+            0.0144,      // 2025-05
+            -0.0096,     // 2025-06
+            -0.0141,     // 2025-07
+            -0.0195,     // 2025-08
+            0.0225,      // 2025-09
+            -0.0142,     // 2025-10
+            0.0184,      // 2025-11
+            0.0168,      // 2025-12
+            -0.0140,     // 2026-01
+            0.0321,      // 2026-02
+            0.0157,      // 2026-03
+            -0.0204,     // 2026-04
+            0.0138,      // 2026-05
+            -0.0074      // 2026-06
+        ];
+
+        // 沪深300月度收益率（%，直接用于图表显示）
+        const indexValues = indexDecimal.map(v => v === null ? 0 : parseFloat((v * 100).toFixed(2)));
+
+        // 基金月度收益率（%），跟随沪深300波动，有略微跑赢
+        const fundValues = [3.0, 5.2, 2.0, 1.0, -1.5, 4.0, 2.0, -1.5, 3.5, 1.5, -3.5, 4.0, 4.5, 1.0, -1.5, 1.5, 0.5, 1.0];
+
+        const markPoints = [
+            { month: '2025-01', ratio: '+3%', isUp: true, target: '红利低波' },
+            { month: '2025-02', ratio: '+5%', isUp: true, target: '科技龙头' },
+            { month: '2025-03', ratio: '+4%', isUp: true, target: '债券增强' },
+            { month: '2025-04', ratio: '-2%', isUp: false, target: '新能源' },
+            { month: '2025-04', ratio: '+3%', isUp: true, target: '港股通' },
+            { month: '2025-05', ratio: '-3%', isUp: false, target: '消费精选' },
+            { month: '2025-05', ratio: '+2%', isUp: true, target: '现金管理' },
+            { month: '2025-06', ratio: '+5%', isUp: true, target: '科技ETF' },
+            { month: '2025-07', ratio: '+3%', isUp: true, target: '黄金ETF' },
+            { month: '2025-08', ratio: '-2%', isUp: false, target: '医药创新' },
+            { month: '2025-09', ratio: '+4%', isUp: true, target: '高端制造' },
+            { month: '2025-10', ratio: '+3%', isUp: true, target: '短债基金' },
+            { month: '2025-11', ratio: '-4%', isUp: false, target: '科技龙头' },
+            { month: '2025-12', ratio: '+3%', isUp: true, target: '消费精选' },
+            { month: '2025-12', ratio: '+2%', isUp: true, target: '红利低波' },
+            { month: '2026-01', ratio: '+5%', isUp: true, target: '科技ETF' },
+            { month: '2026-02', ratio: '-2%', isUp: false, target: '短债基金' },
+            { month: '2026-02', ratio: '+3%', isUp: true, target: '新能源' },
+            { month: '2026-03', ratio: '-2%', isUp: false, target: '港股通' },
+            { month: '2026-04', ratio: '+3%', isUp: true, target: '现金管理' },
+            { month: '2026-05', ratio: '+4%', isUp: true, target: '债券增强' },
+            { month: '2026-05', ratio: '-3%', isUp: false, target: '高端制造' },
+            { month: '2026-06', ratio: '+3%', isUp: true, target: '医药创新' },
+            { month: '2026-06', ratio: '-2%', isUp: false, target: '黄金ETF' }
+        ];
+
+        function getScatterSeries() {
+            return {
+                name: '调仓标记',
+                type: 'scatter',
+                data: markPoints.map((p, idx) => {
+                    const monthIndex = monthDates.indexOf(p.month);
+                    const sameMonthSameDir = markPoints.filter((mp, i) => 
+                        mp.month === p.month && mp.isUp === p.isUp && i < idx
+                    );
+                    const offsetBase = p.isUp ? 0.8 : -0.8;
+                    const yVal = offsetBase + sameMonthSameDir.length * 1.2;
+                    const color = p.isUp ? '#10B981' : '#EF4444';
+                    return {
+                        name: p.month + '-' + p.ratio,
+                        value: [monthIndex, yVal],
+                        symbol: 'triangle',
+                        symbolSize: 14,
+                        symbolRotate: p.isUp ? 0 : 180,
+                        itemStyle: { color: color },
+                        label: {
+                            show: false
+                        }
+                    };
+                }),
+                tooltip: {
+                    formatter: function(params) {
+                        const idx = params.dataIndex;
+                        const p = markPoints[idx];
+                        if (!p) return '';
+                        const action = p.isUp ? '增持' : '减持';
+                        const color = p.isUp ? '#10B981' : '#EF4444';
+                        return `<div style="font-weight:bold;margin-bottom:4px">${p.month}</div>
+                                <div style="color:${color};font-weight:bold;font-size:16px;margin-bottom:6px">${action} ${p.ratio}</div>
+                                <div style="font-size:12px;color:#888">点击查看操作复盘 →</div>`;
+                    }
+                },
+                z: 10,
+                cursor: 'pointer'
+            };
+        }
+
+        // ===== 累计收益视图数据（2021-01 至 2026-06，共66个月） =====
+        const cumDates = [];
+        for (let y = 2021; y <= 2026; y++) {
+            const maxM = y === 2026 ? 6 : 12;
+            for (let m = 1; m <= maxM; m++) {
+                cumDates.push(y + '-' + String(m).padStart(2, '0'));
+            }
+        }
+
+        // 生成基金累计收益率（波浪上升，从0%到+15.8%）
+        const fundCumulative = (function() {
+            const len = cumDates.length; // 66
+            const finalVal = 15.8;
+            const arr = [];
+            for (let i = 0; i < len; i++) {
+                const progress = i / (len - 1);
+                const wave = Math.sin(progress * Math.PI * 4) * 2;
+                arr.push(+(progress * finalVal + wave * (1 - progress)).toFixed(1));
+            }
+            return arr;
+        })();
+
+        // 生成沪深300累计收益率（略低于基金）
+        const hs300Cumulative = (function() {
+            const len = cumDates.length;
+            const finalVal = 12.5;
+            const arr = [];
+            for (let i = 0; i < len; i++) {
+                const progress = i / (len - 1);
+                const wave = Math.sin(progress * Math.PI * 4) * 1.6;
+                arr.push(+(progress * finalVal + wave * (1 - progress)).toFixed(1));
+            }
+            return arr;
+        })();
+
+        window.onload = function() {
+            initMainChart();
+            initPieChart();
+            
+            // 点击基金名称切换饼图
+            document.getElementById('fund-card').onclick = function() {
+                const pieCard = document.getElementById('pie-card');
+                const arrow = document.getElementById('fund-arrow');
+                pieCard.classList.toggle('hidden');
+                arrow.style.transform = pieCard.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+                if(!pieCard.classList.contains('hidden')) {
+                    pieChart.resize();
+                }
+            };
+        };
+
+        function initMainChart() {
+            myChart = echarts.init(document.getElementById('chart-container'));
+            const option = {
+                grid: { top: 30, left: 40, right: 10, bottom: 30 },
+                xAxis: {
+                    type: 'category',
+                    data: monthDates,
+                    axisLabel: {
+                        fontSize: 10, color: '#999',
+                        formatter: function(val) {
+                            const m = parseInt(val.split('-')[1]);
+                            return m % 3 === 1 ? val : '';
+                        }
+                    },
+                    axisLine: { lineStyle: { color: '#eee' } }
+                },
+                yAxis: {
+                    type: 'value',
+                    scale: true,
+                    name: '月度收益率（%）',
+                    nameTextStyle: { fontSize: 10, color: '#999' },
+                    axisLabel: { fontSize: 10, color: '#999', formatter: '{value}%' },
+                    splitLine: { lineStyle: { type: 'dashed', color: '#f5f5f5' } },
+                    
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        let res = params[0].axisValue + '<br/>';
+                        params.forEach(p => {
+                            res += p.marker + p.seriesName + ': ' + p.value + '<br/>';
+                        });
+                        return res;
+                    }
+                },
+                series: [
+                    {
+                        name: '基金月度收益率',
+                        type: 'line',
+                        data: fundValues,
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 4,
+                        lineStyle: { color: '#1A73E8', width: 3 },
+                        itemStyle: { color: '#1A73E8' }
+                    },
+                    {
+                        name: '沪深300月度收益率',
+                        type: 'line',
+                        data: indexValues,
+                        smooth: true,
+                        connectNulls: false,
+                        symbol: 'none',
+                        lineStyle: { color: '#ccc', width: 1, type: 'dashed' },
+                        opacity: 0
+                    },
+                    getScatterSeries()
+                ]
+            };
+            myChart.setOption(option);
+            
+            // 调仓标记点击事件（散点图系列）
+            myChart.on('click', function(params) {
+                if (params.componentType === 'series' && params.seriesName === '调仓标记') {
+                    const dataName = params.data.name;
+                    if (!dataName) return;
+                    const parts = dataName.split('-');
+                    const month = parts[0] + '-' + parts[1];
+                    const ratio = parts.slice(2).join('-');
+                    const mp = markPoints.find(p => p.month === month && p.ratio === ratio);
+                    if (!mp) return;
+                    const action = mp.isUp ? '增持' : '减持';
+                    const actionColor = mp.isUp ? '#10B981' : '#EF4444';
+                    const targetPage = month === '2025-04' && mp.ratio === '-2%' ? '2.html' : '1.html';
+                    
+                    const popup = document.createElement('div');
+                    popup.className = 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-5 rounded-xl shadow-2xl z-50 border border-blue-100 w-64';
+                    popup.innerHTML = `
+                        <div class="text-sm font-bold text-gray-800 mb-3">[${month}] ${action} ${mp.ratio}</div>
+                        <div class="text-xs text-gray-600 mb-4">目标：${mp.target}</div>
+                        <a href="${targetPage}" class="block w-full py-2.5 bg-blue-600 text-white rounded-lg text-sm text-center font-medium hover:bg-blue-700 transition">点击查看详情 →</a>
+                        <button onclick="this.parentElement.remove()" class="w-full mt-2 py-1.5 text-xs text-gray-400 hover:text-gray-600 transition">关闭</button>
+                    `;
+                    document.body.appendChild(popup);
+                }
+            });
+        }
+
+        function initPieChart() {
+            pieChart = echarts.init(document.getElementById('pie-container'));
+            pieChart.setOption({
+                tooltip: { trigger: 'item' },
+                legend: { bottom: '0', left: 'center', itemWidth: 10, itemHeight: 10, textStyle: { fontSize: 10 } },
+                series: [{
+                    name: '资产分布',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['50%', '40%'],
+                    avoidLabelOverlap: false,
+                    label: { show: true, position: 'inside', formatter: '{d}%', fontSize: 10, color: '#fff' },
+                    data: [
+                        { value: 45, name: '权益类', itemStyle: { color: '#1A73E8' } },
+                        { value: 35, name: '固定收益', itemStyle: { color: '#60A5FA' } },
+                        { value: 12, name: '另类投资', itemStyle: { color: '#93C5FD' } },
+                        { value: 8, name: '现金及等价物', itemStyle: { color: '#DBEAFE' } }
+                    ]
+                }]
+            });
+        }
+
+        function toggleBenchmarkLine() {
+            const currentOpt = myChart.getOption();
+            const series = currentOpt.series;
+            const newOpacity = series[1].opacity[0] === 0 ? 1 : 0;
+            myChart.setOption({ series: [{}, { opacity: newOpacity }] });
+        }
+
+        function toggleChartMode() {
+            isCumulativeMode = !isCumulativeMode;
+            const btn = document.getElementById('chart-mode-btn');
+            btn.textContent = isCumulativeMode ? '查看月度' : '查看累计';
+            
+            if (isCumulativeMode) {
+                // 累计视图：绘制两条累计收益曲线，不含调仓标记
+                myChart.setOption({
+                    tooltip: {
+                        trigger: 'axis',
+                        formatter: function(params) {
+                            if (!params || params.length === 0) return '';
+                            let res = params[0].axisValue + '<br/>';
+                            params.forEach(p => {
+                                const suf = p.value !== undefined ? p.value + '%' : '--';
+                                res += p.marker + p.seriesName + ': ' + suf + '<br/>';
+                            });
+                            return res;
+                        }
+                    },
+                    legend: {
+                        data: ['基金累计收益率', '沪深300累计收益率'],
+                        bottom: 0,
+                        left: 'center',
+                        itemWidth: 16,
+                        itemHeight: 10,
+                        textStyle: { fontSize: 10, color: '#666' }
+                    },
+                    xAxis: {
+                        data: cumDates,
+                        axisLabel: {
+                            fontSize: 10, color: '#999',
+                            interval: 5,
+                            rotate: 0
+                        },
+                        axisLine: { lineStyle: { color: '#eee' } },
+                        axisTick: { alignWithLabel: true }
+                    },
+                    yAxis: {
+                        name: '累计收益率（%）',
+                        nameTextStyle: { fontSize: 10, color: '#999' },
+                        axisLabel: { fontSize: 10, color: '#999', formatter: '{value}%' },
+                        splitLine: { lineStyle: { type: 'dashed', color: '#f5f5f5' } },
+                        scale: true
+                    },
+                    grid: { top: 30, left: 40, right: 20, bottom: 45 },
+                    series: [
+                        {
+                            name: '基金累计收益率',
+                            type: 'line',
+                            data: fundCumulative,
+                            smooth: true,
+                            lineStyle: { width: 2, color: '#3B82F6' },
+                            itemStyle: { color: '#3B82F6' },
+                            areaStyle: {
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    { offset: 0, color: 'rgba(59,130,246,0.15)' },
+                                    { offset: 1, color: 'rgba(59,130,246,0.01)' }
+                                ])
+                            },
+                            symbol: 'none'
+                        },
+                        {
+                            name: '沪深300累计收益率',
+                            type: 'line',
+                            data: hs300Cumulative,
+                            smooth: true,
+                            lineStyle: { width: 1.5, color: '#9CA3AF', type: 'dashed' },
+                            itemStyle: { color: '#9CA3AF' },
+                            symbol: 'none'
+                        }
+                    ]
+                }, true);
+            } else {
+                // 月度视图：包含调仓标记散点系列
+                const showBenchOpacity = showBenchmark ? 1 : 0;
+                myChart.setOption({
+                    tooltip: {
+                        trigger: 'axis',
+                        formatter: function(params) {
+                            let res = params[0].axisValue + '<br/>';
+                            params.forEach(p => {
+                                res += p.marker + p.seriesName + ': ' + p.value + '<br/>';
+                            });
+                            return res;
+                        }
+                    },
+                    legend: { show: false },
+                    xAxis: { 
+                        data: monthDates,
+                        axisLabel: {
+                            fontSize: 10, color: '#999',
+                            formatter: function(val) {
+                                const m = parseInt(val.split('-')[1]);
+                                return m % 3 === 1 ? val : '';
+                            }
+                        },
+                        axisLine: { lineStyle: { color: '#eee' } }
+                    },
+                    yAxis: {
+                        name: '月度收益率（%）',
+                        nameTextStyle: { fontSize: 10, color: '#999' },
+                        axisLabel: { fontSize: 10, color: '#999', formatter: '{value}%' },
+                        splitLine: { lineStyle: { type: 'dashed', color: '#f5f5f5' } },
+                        scale: true
+                    },
+                    grid: { top: 30, left: 40, right: 10, bottom: 30 },
+                    series: [
+                        {
+                            name: '基金月度收益率',
+                            type: 'line',
+                            data: fundValues,
+                            smooth: true,
+                            symbol: 'circle',
+                            symbolSize: 4,
+                            lineStyle: { color: '#1A73E8', width: 3 },
+                            itemStyle: { color: '#1A73E8' }
+                        },
+                        {
+                            name: '沪深300月度收益率',
+                            type: 'line',
+                            data: indexValues,
+                            smooth: true,
+                            connectNulls: false,
+                            symbol: 'none',
+                            lineStyle: { color: '#ccc', width: 1, type: 'dashed' },
+                            opacity: showBenchOpacity
+                        },
+                        getScatterSeries()
+                    ]
+                }, true);
+            }
+        }
+
+        function toggleDetail(type) {
+            const el = document.getElementById(type + '-detail');
+            el.classList.toggle('hidden');
+        }
+
+        function toggleAdvisorPanel() {
+            const panel = document.getElementById('advisor-panel');
+            const content = document.getElementById('panel-content');
+            if(panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                setTimeout(() => content.classList.remove('translate-y-full'), 10);
+            } else {
+                content.classList.add('translate-y-full');
+                setTimeout(() => panel.classList.add('hidden'), 300);
+            }
+        }
+
+        function scrollChart(dir) {
+            const start = dir === 'left' ? 0 : 50;
+            const end = dir === 'left' ? 50 : 100;
+            myChart.setOption({
+                dataZoom: [{ start, end, type: 'inside' }]
+            });
+        }
+
+        function showAllAdjustments() {
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black/40 z-30 flex items-center justify-center p-4';
+            overlay.innerHTML = `
+                <div class="bg-white rounded-2xl w-full max-w-sm max-h-[80vh] overflow-y-auto p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-800">📋 全部调仓记录</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-sm">✕</button>
+                    </div>
+                    <table class="w-full text-[10px]">
+                        <thead>
+                            <tr class="text-gray-400 border-b">
+                                <th class="py-2 text-left font-medium">日期</th>
+                                <th class="py-2 text-left font-medium">标的</th>
+                                <th class="py-2 text-left font-medium">类型</th>
+                                <th class="py-2 text-center font-medium">操作</th>
+                                <th class="py-2 text-center font-medium">比例</th>
+                                <th class="py-2 text-left font-medium">原因</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-01-15</a></td><td class="py-2 font-medium">红利低波</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+3%</td><td class="py-2 text-gray-500">布局春季躁动行情</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-02-20</a></td><td class="py-2 font-medium">科技龙头</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+5%</td><td class="py-2 text-gray-500">AI产业政策催化</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-03-08</a></td><td class="py-2 font-medium">债券增强</td><td class="py-2 text-gray-500">固定收益</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+4%</td><td class="py-2 text-gray-500">增强组合防御性</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="2.html" class="text-blue-600 underline font-medium">2025-04-02</a></td><td class="py-2 font-medium">新能源</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-red-500 font-medium">-减持</td><td class="py-2 text-center text-red-500">-2%</td><td class="py-2 text-gray-500">板块估值过高</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-04-18</a></td><td class="py-2 font-medium">港股通</td><td class="py-2 text-gray-500">另类投资</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+3%</td><td class="py-2 text-gray-500">港股估值洼地机会</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-05-10</a></td><td class="py-2 font-medium">消费精选</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-red-500 font-medium">-减持</td><td class="py-2 text-center text-red-500">-3%</td><td class="py-2 text-gray-500">消费复苏不及预期</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-05-22</a></td><td class="py-2 font-medium">现金管理</td><td class="py-2 text-gray-500">现金</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+2%</td><td class="py-2 text-gray-500">流动性管理需求</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-06-03</a></td><td class="py-2 font-medium">科技ETF</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+5%</td><td class="py-2 text-gray-500">看好AI算力国产化</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-07-12</a></td><td class="py-2 font-medium">黄金ETF</td><td class="py-2 text-gray-500">另类投资</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+3%</td><td class="py-2 text-gray-500">全球降息预期升温</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-08-08</a></td><td class="py-2 font-medium">医药创新</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-red-500 font-medium">-减持</td><td class="py-2 text-center text-red-500">-2%</td><td class="py-2 text-gray-500">集采政策压制情绪</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-09-18</a></td><td class="py-2 font-medium">高端制造</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+4%</td><td class="py-2 text-gray-500">制造业PMI回升</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-10-25</a></td><td class="py-2 font-medium">短债基金</td><td class="py-2 text-gray-500">固定收益</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+3%</td><td class="py-2 text-gray-500">锁定前三季度收益</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-11-05</a></td><td class="py-2 font-medium">科技龙头</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-red-500 font-medium">-减持</td><td class="py-2 text-center text-red-500">-4%</td><td class="py-2 text-gray-500">获利了结部分仓位</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-12-10</a></td><td class="py-2 font-medium">消费精选</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+3%</td><td class="py-2 text-gray-500">博弈春节消费旺季</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2025-12-28</a></td><td class="py-2 font-medium">红利低波</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+2%</td><td class="py-2 text-gray-500">年末防守配置</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2026-01-20</a></td><td class="py-2 font-medium">科技ETF</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+5%</td><td class="py-2 text-gray-500">年报预增预期</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2026-02-05</a></td><td class="py-2 font-medium">短债基金</td><td class="py-2 text-gray-500">固定收益</td><td class="py-2 text-center text-red-500 font-medium">-减持</td><td class="py-2 text-center text-red-500">-2%</td><td class="py-2 text-gray-500">利率见底降低久期</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2026-02-28</a></td><td class="py-2 font-medium">新能源</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+3%</td><td class="py-2 text-gray-500">碳酸锂价格企稳</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2026-03-15</a></td><td class="py-2 font-medium">港股通</td><td class="py-2 text-gray-500">另类投资</td><td class="py-2 text-center text-red-500 font-medium">-减持</td><td class="py-2 text-center text-red-500">-2%</td><td class="py-2 text-gray-500">获利了结锁定收益</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2026-04-10</a></td><td class="py-2 font-medium">现金管理</td><td class="py-2 text-gray-500">现金</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+3%</td><td class="py-2 text-gray-500">应对季报波动</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2026-05-22</a></td><td class="py-2 font-medium">债券增强</td><td class="py-2 text-gray-500">固定收益</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+4%</td><td class="py-2 text-gray-500">利率下行周期配置</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2026-05-30</a></td><td class="py-2 font-medium">高端制造</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-red-500 font-medium">-减持</td><td class="py-2 text-center text-red-500">-3%</td><td class="py-2 text-gray-500">板块短期涨幅过大</td></tr>
+                            <tr class="border-b border-gray-50"><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2026-06-08</a></td><td class="py-2 font-medium">医药创新</td><td class="py-2 text-gray-500">权益类</td><td class="py-2 text-center text-green-600 font-medium">+增持</td><td class="py-2 text-center text-green-600">+3%</td><td class="py-2 text-gray-500">创新药出海突破</td></tr>
+                            <tr><td class="py-2"><a href="1.html" class="text-blue-600 underline font-medium">2026-06-20</a></td><td class="py-2 font-medium">黄金ETF</td><td class="py-2 text-gray-500">另类投资</td><td class="py-2 text-center text-red-500 font-medium">-减持</td><td class="py-2 text-center text-red-500">-2%</td><td class="py-2 text-gray-500">美元走强降低配置</td></tr>
+                        </tbody>
+                    </table>
+                    <button onclick="this.closest('.fixed').remove()" class="w-full mt-4 py-3 text-gray-500 font-medium border-t text-xs">关闭</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+    </script>
+</div>
+</body>
+</html>
